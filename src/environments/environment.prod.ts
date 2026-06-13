@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiUrl: '/api',
+  apiUrl: 'https://api.caucasia.com',
   appVersion: '2.4.0',
 };
