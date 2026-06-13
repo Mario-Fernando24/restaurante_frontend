@@ -1,0 +1,19 @@
+<div class="auth-layout">
+  <div class="auth-layout__bg auth-layout__bg--top" aria-hidden="true"></div>
+  <div class="auth-layout__bg auth-layout__bg--bottom" aria-hidden="true"></div>
+
+  <main class="auth-layout__main">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="auth-layout__footer">
+    <p class="auth-layout__copyright">
+      © {{ currentYear }} Caucasia POS Colombia. v{{ appVersion }}
+    </p>
+    <nav class="auth-layout__links" aria-label="Enlaces legales">
+      <a href="#">Términos</a>
+      <span class="auth-layout__separator">|</span>
+      <a href="#">Privacidad</a>
+    </nav>
+  </footer>
+</div>
