@@ -6,6 +6,8 @@ import { ButtonComponent } from '../../../shared/components/button/button.compon
 import { InputComponent } from '../../../shared/components/input/input.component';
 import { AuthService } from '../../../core/auth/services/auth.service';
 
+// Pantalla de login. Angular la muestra dentro del <router-outlet> de auth-layout
+// cuando la URL es /auth/login (definido en auth.routes.ts)
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -57,10 +59,15 @@ export class LoginComponent {
 
     const { email, password, rememberMe } = this.loginForm.getRawValue();
 
-    this.auth
-      .login({ email: email!, password: password!, rememberMe: rememberMe! })
+    this.auth.login({ email: email!, password: password!, rememberMe: rememberMe! })
       .subscribe({
-        next: () => {
+        next: (response) => {
+          console.log('Login exitoso, respuesta:', response);
+          if(!response.accessToken) {
+            this.errorMessage = 'El servidor no devolvió un token de acceso';
+            this.loading = false;
+            return;
+          }
           this.loading = false;
           this.router.navigate(['/auth/login']); // TODO: ir al dashboard
         },

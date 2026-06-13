@@ -1,8 +1,18 @@
+<!--
+  FLUJO para /auth/login:
+
+  app.component.html
+    └── <router-outlet>  →  AuthLayoutComponent (este archivo)
+          ├── fondo
+          ├── <router-outlet>  →  LoginComponent (formulario)
+          └── footer
+-->
 <div class="auth-layout">
   <div class="auth-layout__bg auth-layout__bg--top" aria-hidden="true"></div>
   <div class="auth-layout__bg auth-layout__bg--bottom" aria-hidden="true"></div>
 
   <main class="auth-layout__main">
+    <!-- OUTLET NIVEL 2: aquí Angular inserta LoginComponent u otra pantalla auth -->
     <router-outlet></router-outlet>
   </main>
 

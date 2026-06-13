@@ -23,6 +23,7 @@ export class AuthService {
 
     return this.api.post<AuthResponse>(LOGIN_ENDPOINT, body).pipe(
       map((response) => {
+       console.log('Respuesta del servidor al login:', response);
         const token = this.extractToken(response);
         if (!token) {
           throw new Error('El servidor no devolvió un token válido');
