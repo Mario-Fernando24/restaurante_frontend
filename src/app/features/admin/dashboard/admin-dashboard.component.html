@@ -1,0 +1,141 @@
+<section class="dashboard">
+  <header class="dashboard__header">
+    <div class="dashboard__title">
+      <h1>Resumen General</h1>
+      <p>Bienvenido al panel de control de hoy, {{ todayLabel }}.</p>
+    </div>
+
+    <div class="dashboard__filters" role="group" aria-label="Filtrar por período">
+      <button
+        *ngFor="let period of periods"
+        type="button"
+        class="dashboard__filter"
+        [class.dashboard__filter--active]="activePeriod === period.id"
+        (click)="setPeriod(period.id)"
+      >
+        {{ period.label }}
+      </button>
+    </div>
+  </header>
+
+  <div class="kpi-grid">
+    <article
+      *ngFor="let kpi of kpis"
+      class="kpi-card"
+      [class.kpi-card--alert]="kpi.alert"
+    >
+      <div class="kpi-card__top">
+        <span class="kpi-card__icon" [ngSwitch]="kpi.icon">
+          <svg *ngSwitchCase="'wallet'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="2" y="5" width="20" height="14" rx="2"/><path d="M16 12h.01"/>
+          </svg>
+          <svg *ngSwitchCase="'register'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h8M8 14h4"/>
+          </svg>
+          <svg *ngSwitchCase="'box'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+          </svg>
+          <svg *ngSwitchCase="'alert'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </span>
+        <span
+          class="kpi-card__badge"
+          [class.kpi-card__badge--trend]="kpi.trend"
+          [class.kpi-card__badge--alert]="kpi.alert"
+        >
+          {{ kpi.badge }}
+        </span>
+      </div>
+      <span class="kpi-card__label">{{ kpi.label }}</span>
+      <strong class="kpi-card__value">{{ kpi.value }}</strong>
+      <div *ngIf="kpi.trend" class="kpi-card__spark" aria-hidden="true">
+        <svg viewBox="0 0 120 32" preserveAspectRatio="none">
+          <polyline points="0,24 20,18 40,22 60,10 80,14 100,6 120,12" fill="none" stroke="currentColor" stroke-width="2"/>
+        </svg>
+      </div>
+    </article>
+  </div>
+
+  <div class="middle-grid">
+    <article class="panel panel--chart">
+      <header class="panel__header">
+        <h2>Ventas últimos 7 días</h2>
+        <span class="panel__legend">
+          <span class="panel__legend-dot"></span>
+          Ventas Brutas
+        </span>
+      </header>
+
+      <div class="chart">
+        <div class="chart__bars">
+          <div
+            *ngFor="let height of chartHeights; let i = index"
+            class="chart__bar-wrap"
+          >
+            <div class="chart__bar" [style.height.%]="height"></div>
+            <span class="chart__day">{{ chartDays[i] }}</span>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <article class="panel panel--sales">
+      <header class="panel__header">
+        <h2>Últimas 5 Ventas</h2>
+        <a href="#" class="panel__link">Ver todas</a>
+      </header>
+
+      <ul class="sales-list">
+        <li *ngFor="let sale of recentSales" class="sales-list__item">
+          <span class="sales-list__icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </span>
+          <div class="sales-list__info">
+            <strong>{{ sale.id }}</strong>
+            <span>{{ sale.time }} · {{ sale.register }}</span>
+          </div>
+          <div class="sales-list__amount">
+            <strong>{{ sale.amount }}</strong>
+            <span class="sales-list__status">{{ sale.status }}</span>
+          </div>
+        </li>
+      </ul>
+    </article>
+  </div>
+
+  <div class="bottom-grid">
+    <article class="promo-card">
+      <span class="promo-card__tag">Novedad del Mes</span>
+      <h3>¡Ahora aceptamos pagos con Nequi y Daviplata directamente en el POS!</h3>
+      <p>Activa los nuevos métodos de pago en la configuración de tu terminal.</p>
+    </article>
+
+    <article class="panel panel--inventory">
+      <h2>Estado del Inventario</h2>
+      <div class="gauge">
+        <div
+          class="gauge__ring"
+          [style.background]="'conic-gradient(var(--color-admin-gold) ' + inventoryPercent + '%, #e5e7eb 0)'"
+        >
+          <div class="gauge__inner">
+            <strong>{{ inventoryPercent }}%</strong>
+            <span>Capacidad del Inventario</span>
+          </div>
+        </div>
+      </div>
+      <p class="panel__note">Bodega Central está casi llena.</p>
+    </article>
+
+    <article class="guide-card">
+      <div class="guide-card__overlay">
+        <span>Guía Rápida</span>
+        <h3>Optimiza tus Arqueos de Caja</h3>
+      </div>
+    </article>
+  </div>
+</section>

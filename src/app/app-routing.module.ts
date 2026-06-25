@@ -1,21 +1,38 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import {
+  REDIRECT_PATHS,
+  ROUTE_SEGMENTS,
+} from './core/routing/route-paths';
+import {
+  ADMIN_AREA_GUARDS,
+  CAJERO_AREA_GUARDS,
+} from './core/routing/area-guards';
 
-// Rutas principales de la app (nivel 1)
 const routes: Routes = [
-  // Al abrir http://localhost:4200/ redirige al login
-  { path: '', redirectTo: 'auth/login', pathMatch: 'full' },
+  { path: '', redirectTo: REDIRECT_PATHS.LOGIN, pathMatch: 'full' },
 
-  // Todo lo que empiece con /auth carga el módulo de autenticación (lazy loading)
-  // Las rutas hijas están definidas en features/auth/auth.routes.ts
   {
-    path: 'auth',
+    path: ROUTE_SEGMENTS.AUTH,
     loadChildren: () =>
       import('./features/auth/auth.module').then((m) => m.AuthModule),
   },
 
-  // URL desconocida → login
-  { path: '**', redirectTo: 'auth/login' },
+  {
+    path: ROUTE_SEGMENTS.ADMIN,
+    canActivate: ADMIN_AREA_GUARDS,
+    loadChildren: () =>
+      import('./features/admin/admin.module').then((m) => m.AdminModule),
+  },
+
+  {
+    path: ROUTE_SEGMENTS.CAJERO,
+    canActivate: CAJERO_AREA_GUARDS,
+    loadChildren: () =>
+      import('./features/home/home.module').then((m) => m.HomeModule),
+  },
+
+  { path: '**', redirectTo: REDIRECT_PATHS.LOGIN },
 ];
 
 @NgModule({

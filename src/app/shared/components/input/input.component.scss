@@ -1,7 +1,7 @@
 .input-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 
   &--disabled {
     opacity: 0.6;
@@ -10,7 +10,7 @@
 
 .input-field__label {
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-text);
 }
 
@@ -22,14 +22,14 @@
 
 .input-field__input {
   width: 100%;
-  padding: 12px 14px;
+  padding: 13px 16px;
   font-size: 14px;
   font-family: inherit;
   color: var(--color-text);
-  background-color: var(--color-surface);
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: all var(--transition);
 
   &::placeholder {
     color: var(--color-text-muted);
@@ -37,28 +37,30 @@
 
   &:focus {
     border-color: var(--color-border-focus);
-    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+    box-shadow: 0 0 0 4px rgba(13, 148, 136, 0.1);
+    background: #feffff;
   }
 
   &--with-prefix {
-    padding-left: 42px;
+    padding-left: 44px;
   }
 
   &--with-suffix {
-    padding-right: 42px;
+    padding-right: 44px;
   }
 
   &:disabled {
     cursor: not-allowed;
-    background-color: var(--color-bg);
+    background: var(--color-bg-soft);
   }
 }
 
 .input-field--error .input-field__input {
   border-color: var(--color-error);
+  background: var(--color-error-soft);
 
   &:focus {
-    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15);
+    box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.1);
   }
 }
 
@@ -78,14 +80,14 @@
     right: 10px;
     background: none;
     border: none;
-    padding: 4px;
+    padding: 6px;
     cursor: pointer;
     border-radius: var(--radius-sm);
     color: var(--color-text-muted);
 
     &:hover {
-      color: var(--color-text-secondary);
-      background-color: var(--color-bg);
+      color: var(--color-primary);
+      background: var(--color-primary-light);
     }
   }
 }

@@ -1,0 +1,55 @@
+<section class="dashboard">
+  <header class="dashboard__header">
+    <div>
+      <h2>Inicio de turno</h2>
+      <p>Tu caja está lista · {{ userEmail }}</p>
+    </div>
+    <span class="badge-open">Arqueo abierto</span>
+  </header>
+
+  <section class="shift-card">
+    <span class="shift-card__status">
+      <span class="pulse"></span>
+      Sesión activa — {{ shift.caja }}
+    </span>
+    <div class="shift-card__body">
+      <div>
+        <span class="shift-card__label">Efectivo en caja</span>
+        <strong class="shift-card__amount">{{ shift.efectivo }}</strong>
+        <div class="shift-card__mini">
+          <div>
+            <span>Apertura</span>
+            <strong>{{ shift.apertura }}</strong>
+          </div>
+          <div>
+            <span>Ventas hoy</span>
+            <strong>{{ shift.ventasHoy }}</strong>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="btn-pos">Ir a Punto de Venta</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>Mis ventas recientes</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Factura</th>
+          <th>Hora</th>
+          <th>Método</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let v of ventas">
+          <td>{{ v.factura }}</td>
+          <td>{{ v.hora }}</td>
+          <td>{{ v.metodo }}</td>
+          <td><strong>{{ v.total }}</strong></td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+</section>

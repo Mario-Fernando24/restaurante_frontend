@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 
-const TOKEN_KEY = 'caucasia_access_token';
+const TOKEN_KEY = 'access_token';
 
 @Injectable({ providedIn: 'root' })
 export class TokenStorageService {

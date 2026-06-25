@@ -5,9 +5,8 @@ import { CommonModule } from '@angular/common';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
 import { InputComponent } from '../../../shared/components/input/input.component';
 import { AuthService } from '../../../core/auth/services/auth.service';
+import { LoginResponse } from '../../../core/auth/models/auth.models';
 
-// Pantalla de login. Angular la muestra dentro del <router-outlet> de auth-layout
-// cuando la URL es /auth/login (definido en auth.routes.ts)
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -49,7 +48,6 @@ export class LoginComponent {
 
   onSubmit(): void {
     if (this.loginForm.invalid) {
-      // Marcar todos los campos como tocados para mostrar errores
       this.loginForm.markAllAsTouched();
       return;
     }
@@ -59,22 +57,29 @@ export class LoginComponent {
 
     const { email, password, rememberMe } = this.loginForm.getRawValue();
 
-    this.auth.login({ email: email!, password: password!, rememberMe: rememberMe! })
+    this.auth
+      .login({ email: email!, password: password!, rememberMe: rememberMe! })
       .subscribe({
-        next: (response) => {
-          console.log('Login exitoso, respuesta:', response);
-          if(!response.accessToken) {
-            this.errorMessage = 'El servidor no devolvió un token de acceso';
-            this.loading = false;
-            return;
-          }
-          this.loading = false;
-          this.router.navigate(['/auth/login']); // TODO: ir al dashboard
-        },
+        next: (response) => this.handleLoginSuccess(response),
         error: (err) => {
           this.loading = false;
           this.errorMessage = err?.message ?? 'Error al iniciar sesión';
         },
       });
+  }
+
+  private handleLoginSuccess(response: LoginResponse): void {
+    this.loading = false;
+
+    const { usuario } = response;
+
+    if (!usuario?.rol?.id_rol) {
+      this.errorMessage = response.mensaje || 'No se pudo iniciar sesión';
+      return;
+    }
+    // Redirigir al usuario a la ruta correspondiente según su rol
+    const route = this.auth.getDefaultRouteForUser(usuario);
+    // Reemplazar la URL actual en el historial del navegador para evitar que el usuario pueda volver a la página de inicio de sesión
+    this.router.navigateByUrl(route, { replaceUrl: true });
   }
 }

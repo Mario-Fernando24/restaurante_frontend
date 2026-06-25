@@ -9,21 +9,29 @@ export interface LoginRequest extends LoginApiPayload {
   rememberMe?: boolean;
 }
 
-/** Respuesta del POST /auth/login/ (soporta distintos formatos del backend) */
-export interface AuthResponse {
-  accessToken?: string;
-  access?: string;
-  access_token?: string;
-  token?: string;
-  refresh?: string;
-  refresh_token?: string;
-  refreshToken?: string;
-  expiresIn?: number;
+export interface Rol {
+  id_rol: number;
+  nombre: string;
 }
 
-export interface User {
-  id: string;
+export interface Usuario {
+  id_usuario: number;
+  nombre: string;
+  apellido: string;
+  direccion: string;
+  telefono: string;
   email: string;
-  name: string;
-  role: string;
+  estado: string;
+  rol: Rol;
+}
+
+/** Respuesta del POST /auth/login */
+export interface LoginResponse {
+  ok: boolean;
+  mensaje: string;
+  usuario: Usuario;
+  /** Por si el backend agrega JWT más adelante */
+  accessToken?: string;
+  access_token?: string;
+  token?: string;
 }

@@ -4,36 +4,36 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: var(--color-bg);
   position: relative;
   overflow: hidden;
   padding: 24px 16px 32px;
+  background:
+    radial-gradient(ellipse 80% 60% at 10% 20%, rgba(13, 148, 136, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 70% 50% at 90% 80%, rgba(196, 165, 116, 0.1) 0%, transparent 55%),
+    linear-gradient(165deg, #f8fafc 0%, #eef2f7 50%, #f1f5f9 100%);
 }
 
 .auth-layout__bg {
   position: absolute;
   border-radius: 50%;
-  background-size: cover;
-  background-position: center;
-  filter: blur(1px);
   pointer-events: none;
+  filter: blur(60px);
+  opacity: 0.5;
 
   &--top {
-    top: -80px;
-    right: -60px;
-    width: 280px;
-    height: 280px;
-    background-image: url('/assets/images/bg-restaurant.svg');
-    opacity: 0.85;
+    top: -120px;
+    right: -80px;
+    width: 400px;
+    height: 400px;
+    background: rgba(13, 148, 136, 0.15);
   }
 
   &--bottom {
-    bottom: -100px;
-    left: -80px;
-    width: 320px;
-    height: 320px;
-    background-image: url('/assets/images/bg-food.svg');
-    opacity: 0.9;
+    bottom: -140px;
+    left: -100px;
+    width: 420px;
+    height: 420px;
+    background: rgba(196, 165, 116, 0.12);
   }
 }
 
@@ -70,15 +70,31 @@
 
   a {
     color: var(--color-text-muted);
-    text-decoration: none;
 
     &:hover {
-      color: var(--color-text-secondary);
-      text-decoration: underline;
+      color: var(--color-primary);
     }
   }
 }
 
 .auth-layout__separator {
   color: var(--color-border);
+}
+
+.auth-layout__trust {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding: 6px 12px;
+  background: var(--color-surface-glass);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: 11px;
+  color: var(--color-text-secondary);
+
+  svg {
+    color: var(--color-success);
+  }
 }
