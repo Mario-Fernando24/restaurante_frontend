@@ -13,7 +13,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: 'Productos', route: ROUTES.ADMIN, icon: 'box' },
   { label: 'Inventario', route: ROUTES.ADMIN, icon: 'inventory' },
   { label: 'Clientes', route: ROUTES.ADMIN, icon: 'users' },
-  { label: 'Categorías', route: ROUTES.ADMIN, icon: 'tag' },
+  { label: 'Categorías', route: ROUTES.ADMIN_CATEGORIAS, icon: 'tag' },
   { label: 'Usuarios', route: ROUTES.ADMIN, icon: 'user-cog' },
   { label: 'Turnos de Caja', route: ROUTES.ADMIN, icon: 'clock' },
   { label: 'Auditoría', route: ROUTES.ADMIN, icon: 'shield' },

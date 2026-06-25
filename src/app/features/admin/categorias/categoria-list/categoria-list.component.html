@@ -1,0 +1,86 @@
+<section class="categorias-page">
+  <header class="categorias-page__header">
+    <div>
+      <h1>Categorías</h1>
+      <p>Gestiona las categorías de productos del menú.</p>
+    </div>
+    <button type="button" class="categorias-page__add" disabled>
+      + Nueva categoría
+    </button>
+  </header>
+
+  <article class="categorias-card">
+    <div class="categorias-card__toolbar">
+      <div class="categorias-card__search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          type="search"
+          [formControl]="searchControl"
+          placeholder="Buscar por nombre, descripción o estado..."
+          aria-label="Buscar categorías"
+        />
+      </div>
+      <span class="categorias-card__count" *ngIf="!loading">
+        {{ totalItems }} resultado{{ totalItems === 1 ? '' : 's' }}
+      </span>
+    </div>
+
+    <div *ngIf="loading" class="categorias-card__state">Cargando categorías...</div>
+
+    <div *ngIf="!loading && errorMessage" class="categorias-card__state categorias-card__state--error">
+      {{ errorMessage }}
+      <button type="button" (click)="loadCategorias()">Reintentar</button>
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && categorias.length === 0" class="categorias-card__state">
+      No se encontraron categorías.
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && categorias.length > 0" class="table-wrap">
+      <table class="categorias-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Estado</th>
+            <th>Creación</th>
+            <th>Actualización</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let categoria of categorias">
+            <td data-label="ID">{{ categoria.id_categoria }}</td>
+            <td data-label="Nombre">
+              <strong>{{ categoria.nombre }}</strong>
+            </td>
+            <td data-label="Descripción">{{ categoria.descripcion }}</td>
+            <td data-label="Estado">
+              <span
+                class="status-badge"
+                [class.status-badge--active]="isActivo(categoria.estado)"
+                [class.status-badge--inactive]="!isActivo(categoria.estado)"
+              >
+                {{ categoria.estado }}
+              </span>
+            </td>
+            <td data-label="Creación">{{ formatDate(categoria.fecha_creacion) }}</td>
+            <td data-label="Actualización">{{ formatDate(categoria.fecha_actualizacion) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-paginator
+      *ngIf="!loading && !errorMessage && totalItems > 0"
+      [page]="page"
+      [pageSize]="pageSize"
+      [totalItems]="totalItems"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-paginator>
+  </article>
+</section>

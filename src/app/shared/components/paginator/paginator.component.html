@@ -1,0 +1,39 @@
+<div class="paginator" *ngIf="totalItems > 0">
+  <div class="paginator__info">
+    Mostrando <strong>{{ rangeStart }}–{{ rangeEnd }}</strong> de
+    <strong>{{ totalItems }}</strong>
+  </div>
+
+  <div class="paginator__controls">
+    <label class="paginator__size">
+      Filas
+      <select [value]="pageSize" (change)="onPageSizeChange($event)">
+        <option *ngFor="let size of pageSizeOptions" [value]="size">
+          {{ size }}
+        </option>
+      </select>
+    </label>
+
+    <div class="paginator__nav">
+      <button
+        type="button"
+        class="paginator__btn"
+        [disabled]="!canGoPrev"
+        (click)="goToPage(page - 1)"
+        aria-label="Página anterior"
+      >
+        ‹
+      </button>
+      <span class="paginator__current">{{ page }} / {{ totalPages }}</span>
+      <button
+        type="button"
+        class="paginator__btn"
+        [disabled]="!canGoNext"
+        (click)="goToPage(page + 1)"
+        aria-label="Página siguiente"
+      >
+        ›
+      </button>
+    </div>
+  </div>
+</div>
