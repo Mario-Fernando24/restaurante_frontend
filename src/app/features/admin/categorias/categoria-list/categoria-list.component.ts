@@ -4,7 +4,8 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
 import { PaginatorComponent } from '../../../../shared/components/paginator/paginator.component';
-import { Categoria } from '../models/categoria.model';
+import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { Categoria, CategoriaEstado } from '../models/categoria.model';
 import { CategoriaService } from '../services/categoria.service';
 
 @Component({
@@ -21,6 +22,8 @@ export class CategoriaListComponent implements OnInit, OnDestroy {
   categorias: Categoria[] = [];
   loading = false;
   errorMessage = '';
+  actionError = '';
+  updatingId: number | null = null;
 
   page = 1;
   pageSize = 10;
@@ -28,7 +31,10 @@ export class CategoriaListComponent implements OnInit, OnDestroy {
 
   private readonly destroy$ = new Subject<void>();
 
-  constructor(private categoriaService: CategoriaService) {}
+  constructor(
+    private categoriaService: CategoriaService,
+    private confirmDialog: ConfirmDialogService
+  ) {}
 
   ngOnInit(): void {
     this.searchControl.valueChanges
@@ -86,6 +92,63 @@ export class CategoriaListComponent implements OnInit, OnDestroy {
 
   isActivo(estado: string): boolean {
     return estado.toLowerCase() === 'activo';
+  }
+
+  isUpdating(id: number): boolean {
+    return this.updatingId === id;
+  }
+
+  getToggleLabel(estado: string): string {
+    return this.isActivo(estado) ? 'Desactivar' : 'Activar';
+  }
+
+  toggleEstado(categoria: Categoria): void {
+    if (this.isUpdating(categoria.id_categoria)) return;
+
+    const nuevoEstado = this.categoriaService.getEstadoOpuesto(categoria.estado);
+    const desactivando = nuevoEstado === 'Inactivo';
+
+    this.confirmDialog
+      .open({
+        title: desactivando ? '¿Desactivar categoría?' : '¿Activar categoría?',
+        message: desactivando
+          ? `La categoría "${categoria.nombre}" quedará inactiva y no estará disponible en el menú.`
+          : `La categoría "${categoria.nombre}" quedará activa y estará disponible en el menú.`,
+        confirmText: desactivando ? 'Sí, desactivar' : 'Sí, activar',
+        cancelText: 'Cancelar',
+        variant: desactivando ? 'danger' : 'success',
+        icon: desactivando ? 'warning' : 'question',
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          this.ejecutarCambioEstado(categoria, nuevoEstado);
+        }
+      });
+  }
+
+  private ejecutarCambioEstado(categoria: Categoria, nuevoEstado: CategoriaEstado): void {
+    // Marcar la categoría como en proceso de actualización y limpiar cualquier error previo
+    this.updatingId = categoria.id_categoria;
+    this.actionError = '';
+
+    this.categoriaService.cambiarEstado(categoria.id_categoria, nuevoEstado).subscribe({
+      next: (updated) => {
+        // Actualizar la categoría en la lista localmente
+        const index = this.categorias.findIndex(
+          (item) => item.id_categoria === categoria.id_categoria
+        );
+        // Si se encuentra la categoría, actualizarla con los nuevos datos
+        if (index >= 0) {
+          this.categorias[index] = updated;
+        }
+       // Limpiar el estado de actualización y cualquier mensaje de error
+        this.updatingId = null;
+      },
+      error: (err) => {
+        this.updatingId = null;
+        this.actionError = err?.message ?? 'Error al cambiar el estado';
+      },
+    });
   }
 
   formatDate(value: string): string {

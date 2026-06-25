@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
@@ -5,6 +6,8 @@ import { ApiService } from '../../../../core/services/api.service';
 import {
   Categoria,
   CategoriaApiResponse,
+  CategoriaEstado,
+  CategoriaMutationResponse,
   CategoriaQueryParams,
   PaginatedResult,
 } from '../models/categoria.model';
@@ -14,8 +17,7 @@ const CATEGORIAS_ENDPOINT = '/categorias';
 @Injectable({ providedIn: 'root' })
 export class CategoriaService {
   constructor(private api: ApiService) {}
-  
-  // Obtiene una lista paginada de categorías desde la API.
+
   getCategorias(params: CategoriaQueryParams = {}): Observable<PaginatedResult<Categoria>> {
     const page = params.page ?? 1;
     const pageSize = params.pageSize ?? 10;
@@ -33,12 +35,34 @@ export class CategoriaService {
     return this.api.get<CategoriaApiResponse>(CATEGORIAS_ENDPOINT, query).pipe(
       map((response) => this.toPaginatedResult(response, page, pageSize, search)),
       catchError((error) =>
-        throwError(() => new Error(this.parseError(error)))
+        throwError(() => new Error(this.parseError(error, 'Error al cargar las categorías')))
       )
     );
   }
 
-  // Convierte la respuesta de la API en un resultado paginado.
+  cambiarEstado(id: number, nuevoEstado: CategoriaEstado): Observable<Categoria> {
+    return this.api
+      .post<CategoriaMutationResponse | Categoria>(`${CATEGORIAS_ENDPOINT}/${id}`, {
+        nuevo_estado: nuevoEstado,
+      })
+      .pipe(
+        map((response) => {
+          console.log('Response from cambiarEstado:', response); // Log the response for debugging
+          return this.extractCategoria(response);
+        }),
+        catchError((error) =>
+          throwError(() => {
+            console.error('Error in cambiarEstado:', error); // Log the error for debugging
+            return new Error(this.parseError(error, 'Error al cambiar el estado de la categoría'));
+          })
+        )
+      );
+  }
+
+  getEstadoOpuesto(estado: string): CategoriaEstado {
+    return estado.toLowerCase() === 'activo' ? 'Inactivo' : 'Activo';
+  }
+
   private toPaginatedResult(
     response: CategoriaApiResponse,
     page: number,
@@ -63,13 +87,25 @@ export class CategoriaService {
 
     const total = items.length;
     const start = (page - 1) * pageSize;
-    // Asegura que el índice de inicio no sea negativo y que no exceda el total de elementos.
     const pagedItems = items.slice(start, start + pageSize);
 
     return { items: pagedItems, total, page, pageSize };
   }
 
-  // Normaliza los datos de la categoría para asegurar que todos los campos tengan el tipo correcto.
+  private extractCategoria(response: CategoriaMutationResponse | Categoria): Categoria {
+    if ('id_categoria' in response) {
+      return this.normalize(response);
+    }
+
+    if (response?.body) {
+      return this.normalize(response.body);
+    }
+
+    throw new Error(
+      String(response?.mensaje ?? response?.message ?? 'No se pudo actualizar la categoría')
+    );
+  }
+
   private normalize(raw: Categoria): Categoria {
     return {
       id_categoria: Number(raw.id_categoria),
@@ -81,9 +117,18 @@ export class CategoriaService {
     };
   }
 
-  // Analiza el error recibido y devuelve un mensaje de error adecuado.
-  private parseError(error: unknown): string {
+  private parseError(error: unknown, fallback: string): string {
+    if (error instanceof HttpErrorResponse) {
+      const body = error.error;
+      if (body && typeof body === 'object') {
+        if (body.mensaje) return String(body.mensaje);
+        if (body.message) return String(body.message);
+        if (body.detail) return String(body.detail);
+      }
+      if (typeof body === 'string' && body.trim()) return body;
+    }
+
     if (error instanceof Error) return error.message;
-    return 'Error al cargar las categorías';
+    return fallback;
   }
 }

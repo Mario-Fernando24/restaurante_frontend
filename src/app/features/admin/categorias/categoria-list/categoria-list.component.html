@@ -27,6 +27,10 @@
       </span>
     </div>
 
+    <div *ngIf="actionError" class="categorias-card__alert">
+      {{ actionError }}
+    </div>
+
     <div *ngIf="loading" class="categorias-card__state">Cargando categorías...</div>
 
     <div *ngIf="!loading && errorMessage" class="categorias-card__state categorias-card__state--error">
@@ -48,6 +52,7 @@
             <th>Estado</th>
             <th>Creación</th>
             <th>Actualización</th>
+            <th>Acciones</th>
           </tr>
         </thead>
         <tbody>
@@ -68,6 +73,18 @@
             </td>
             <td data-label="Creación">{{ formatDate(categoria.fecha_creacion) }}</td>
             <td data-label="Actualización">{{ formatDate(categoria.fecha_actualizacion) }}</td>
+            <td data-label="Acciones">
+              <button
+                type="button"
+                class="action-btn"
+                [class.action-btn--danger]="isActivo(categoria.estado)"
+                [class.action-btn--success]="!isActivo(categoria.estado)"
+                [disabled]="isUpdating(categoria.id_categoria)"
+                (click)="toggleEstado(categoria)"
+              >
+                {{ isUpdating(categoria.id_categoria) ? 'Guardando...' : getToggleLabel(categoria.estado) }}
+              </button>
+            </td>
           </tr>
         </tbody>
       </table>
