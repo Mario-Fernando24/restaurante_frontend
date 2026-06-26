@@ -9,6 +9,7 @@ import {
   CategoriaEstado,
   CategoriaMutationResponse,
   CategoriaQueryParams,
+  CrearCategoriaRequest,
   PaginatedResult,
 } from '../models/categoria.model';
 
@@ -40,21 +41,31 @@ export class CategoriaService {
     );
   }
 
+  crearCategoria(payload: CrearCategoriaRequest): Observable<Categoria> {
+    return this.api
+      .post<CategoriaMutationResponse>(`${CATEGORIAS_ENDPOINT}/crear`, {
+        nombre: payload.nombre.trim(),
+        descripcion: payload.descripcion.trim(),
+      })
+      .pipe(
+        map((response) => this.extractCategoria(response, 'No se pudo crear la categoría')),
+        catchError((error) =>
+          throwError(() => new Error(this.parseError(error, 'Error al crear la categoría')))
+        )
+      );
+  }
+
   cambiarEstado(id: number, nuevoEstado: CategoriaEstado): Observable<Categoria> {
     return this.api
-      .post<CategoriaMutationResponse | Categoria>(`${CATEGORIAS_ENDPOINT}/${id}`, {
+      .post<CategoriaMutationResponse>(`${CATEGORIAS_ENDPOINT}/${id}`, {
         nuevo_estado: nuevoEstado,
       })
       .pipe(
-        map((response) => {
-          console.log('Response from cambiarEstado:', response); // Log the response for debugging
-          return this.extractCategoria(response);
-        }),
+        map((response) =>
+          this.extractCategoria(response, 'No se pudo actualizar la categoría')
+        ),
         catchError((error) =>
-          throwError(() => {
-            console.error('Error in cambiarEstado:', error); // Log the error for debugging
-            return new Error(this.parseError(error, 'Error al cambiar el estado de la categoría'));
-          })
+          throwError(() => new Error(this.parseError(error, 'Error al cambiar el estado')))
         )
       );
   }
@@ -92,18 +103,23 @@ export class CategoriaService {
     return { items: pagedItems, total, page, pageSize };
   }
 
-  private extractCategoria(response: CategoriaMutationResponse | Categoria): Categoria {
+  private extractCategoria(
+    response: CategoriaMutationResponse | Categoria,
+    fallback: string
+  ): Categoria {
     if ('id_categoria' in response) {
       return this.normalize(response);
+    }
+
+    if (response?.status === false) {
+      throw new Error(String(response.mensaje ?? response.message ?? fallback));
     }
 
     if (response?.body) {
       return this.normalize(response.body);
     }
 
-    throw new Error(
-      String(response?.mensaje ?? response?.message ?? 'No se pudo actualizar la categoría')
-    );
+    throw new Error(String(response?.mensaje ?? response?.message ?? fallback));
   }
 
   private normalize(raw: Categoria): Categoria {
@@ -121,6 +137,7 @@ export class CategoriaService {
     if (error instanceof HttpErrorResponse) {
       const body = error.error;
       if (body && typeof body === 'object') {
+        if (body.status === false && body.mensaje) return String(body.mensaje);
         if (body.mensaje) return String(body.mensaje);
         if (body.message) return String(body.message);
         if (body.detail) return String(body.detail);

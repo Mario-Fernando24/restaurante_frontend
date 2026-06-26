@@ -1,8 +1,15 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import {
+  FormBuilder,
+  FormControl,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, takeUntil } from 'rxjs/operators';
+import { ButtonComponent } from '../../../../shared/components/button/button.component';
+import { InputComponent } from '../../../../shared/components/input/input.component';
 import { PaginatorComponent } from '../../../../shared/components/paginator/paginator.component';
 import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
 import { Categoria, CategoriaEstado } from '../models/categoria.model';
@@ -11,7 +18,13 @@ import { CategoriaService } from '../services/categoria.service';
 @Component({
   selector: 'app-categoria-list',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, PaginatorComponent],
+  imports: [
+    CommonModule,
+    ReactiveFormsModule,
+    PaginatorComponent,
+    InputComponent,
+    ButtonComponent,
+  ],
   templateUrl: './categoria-list.component.html',
   styleUrls: ['./categoria-list.component.scss'],
 })
@@ -19,11 +32,20 @@ export class CategoriaListComponent implements OnInit, OnDestroy {
   readonly searchControl = new FormControl('', { nonNullable: true });
   readonly pageSizeOptions = [5, 10, 25, 50];
 
+  readonly createForm = this.fb.group({
+    nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
+    descripcion: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(200)]],
+  });
+
   categorias: Categoria[] = [];
   loading = false;
   errorMessage = '';
   actionError = '';
   updatingId: number | null = null;
+
+  showCreateModal = false;
+  creating = false;
+  createError = '';
 
   page = 1;
   pageSize = 10;
@@ -32,6 +54,7 @@ export class CategoriaListComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   constructor(
+    private fb: FormBuilder,
     private categoriaService: CategoriaService,
     private confirmDialog: ConfirmDialogService
   ) {}
@@ -50,6 +73,62 @@ export class CategoriaListComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  get nombreError(): string {
+    const control = this.createForm.get('nombre');
+    if (!control?.touched || !control.errors) return '';
+    if (control.errors['required']) return 'El nombre es obligatorio';
+    if (control.errors['minlength']) return 'Mínimo 2 caracteres';
+    if (control.errors['maxlength']) return 'Máximo 80 caracteres';
+    return '';
+  }
+
+  get descripcionError(): string {
+    const control = this.createForm.get('descripcion');
+    if (!control?.touched || !control.errors) return '';
+    if (control.errors['required']) return 'La descripción es obligatoria';
+    if (control.errors['minlength']) return 'Mínimo 3 caracteres';
+    if (control.errors['maxlength']) return 'Máximo 200 caracteres';
+    return '';
+  }
+
+  openCreateModal(): void {
+    this.createForm.reset();
+    this.createError = '';
+    this.showCreateModal = true;
+  }
+
+  closeCreateModal(): void {
+    if (this.creating) return;
+    this.showCreateModal = false;
+    this.createError = '';
+    this.createForm.reset();
+  }
+
+  submitCreate(): void {
+    if (this.createForm.invalid) {
+      this.createForm.markAllAsTouched();
+      return;
+    }
+
+    const { nombre, descripcion } = this.createForm.getRawValue();
+    this.creating = true;
+    this.createError = '';
+
+    this.categoriaService.crearCategoria({ nombre: nombre!, descripcion: descripcion! }).subscribe({
+      next: () => {
+        this.creating = false;
+        this.showCreateModal = false;
+        this.createForm.reset();
+        this.page = 1;
+        this.loadCategorias();
+      },
+      error: (err) => {
+        this.creating = false;
+        this.createError = err?.message ?? 'Error al crear la categoría';
+      },
+    });
   }
 
   loadCategorias(): void {
@@ -127,21 +206,19 @@ export class CategoriaListComponent implements OnInit, OnDestroy {
   }
 
   private ejecutarCambioEstado(categoria: Categoria, nuevoEstado: CategoriaEstado): void {
-    // Marcar la categoría como en proceso de actualización y limpiar cualquier error previo
     this.updatingId = categoria.id_categoria;
     this.actionError = '';
 
     this.categoriaService.cambiarEstado(categoria.id_categoria, nuevoEstado).subscribe({
       next: (updated) => {
-        // Actualizar la categoría en la lista localmente
         const index = this.categorias.findIndex(
           (item) => item.id_categoria === categoria.id_categoria
         );
-        // Si se encuentra la categoría, actualizarla con los nuevos datos
+
         if (index >= 0) {
           this.categorias[index] = updated;
         }
-       // Limpiar el estado de actualización y cualquier mensaje de error
+
         this.updatingId = null;
       },
       error: (err) => {

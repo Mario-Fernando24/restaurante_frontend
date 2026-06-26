@@ -13,6 +13,11 @@ export interface CambiarEstadoCategoriaRequest {
   nuevo_estado: CategoriaEstado;
 }
 
+export interface CrearCategoriaRequest {
+  nombre: string;
+  descripcion: string;
+}
+
 export interface CategoriaApiResponse {
   status: boolean;
   body: Categoria[];

@@ -4,7 +4,7 @@
       <h1>Categorías</h1>
       <p>Gestiona las categorías de productos del menú.</p>
     </div>
-    <button type="button" class="categorias-page__add" disabled>
+    <button type="button" class="categorias-page__add" (click)="openCreateModal()">
       + Nueva categoría
     </button>
   </header>
@@ -101,3 +101,56 @@
     ></app-paginator>
   </article>
 </section>
+
+<div
+  *ngIf="showCreateModal"
+  class="create-modal-overlay"
+  (click)="closeCreateModal()"
+  aria-modal="true"
+  role="dialog"
+>
+  <div class="create-modal" (click)="$event.stopPropagation()">
+    <header class="create-modal__header">
+      <div>
+        <h2>Nueva categoría</h2>
+        <p>Completa los datos para registrar una categoría en el menú.</p>
+      </div>
+      <button
+        type="button"
+        class="create-modal__close"
+        aria-label="Cerrar"
+        [disabled]="creating"
+        (click)="closeCreateModal()"
+      >
+        ×
+      </button>
+    </header>
+
+    <form class="create-modal__form" [formGroup]="createForm" (ngSubmit)="submitCreate()">
+      <div *ngIf="createError" class="create-modal__error">{{ createError }}</div>
+
+      <app-input
+        label="Nombre"
+        placeholder="Ej: Bebidas"
+        formControlName="nombre"
+        [error]="nombreError"
+      ></app-input>
+
+      <app-input
+        label="Descripción"
+        placeholder="Ej: Gaseosas, jugos y cervezas"
+        formControlName="descripcion"
+        [error]="descripcionError"
+      ></app-input>
+
+      <div class="create-modal__actions">
+        <app-button type="button" variant="secondary" [disabled]="creating" (clicked)="closeCreateModal()">
+          Cancelar
+        </app-button>
+        <app-button type="submit" [loading]="creating">
+          Crear categoría
+        </app-button>
+      </div>
+    </form>
+  </div>
+</div>
