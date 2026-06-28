@@ -43,7 +43,7 @@ export class CategoriaService {
 
   crearCategoria(payload: CrearCategoriaRequest): Observable<Categoria> {
     return this.api
-      .post<CategoriaMutationResponse>(`${CATEGORIAS_ENDPOINT}/crear`, {
+      .post<CategoriaMutationResponse>(`${CATEGORIAS_ENDPOINT}/crear/`, {
         nombre: payload.nombre.trim(),
         descripcion: payload.descripcion.trim(),
       })
@@ -57,7 +57,7 @@ export class CategoriaService {
 
   cambiarEstado(id: number, nuevoEstado: CategoriaEstado): Observable<Categoria> {
     return this.api
-      .post<CategoriaMutationResponse>(`${CATEGORIAS_ENDPOINT}/${id}`, {
+      .post<CategoriaMutationResponse>(`${CATEGORIAS_ENDPOINT}/${id}/`, {
         nuevo_estado: nuevoEstado,
       })
       .pipe(
