@@ -1,0 +1,246 @@
+<section class="admin-page">
+  <header class="admin-page__header">
+    <div>
+      <h1>Insumos</h1>
+      <p>
+        Registra el inventario y el costo real de compra. Para ingredientes en gramos,
+        indica cuánto cuesta <strong>1 libra</strong> y el sistema calcula el costo por gramo.
+      </p>
+    </div>
+    <button type="button" class="admin-page__add" (click)="openCreateModal()">
+      + Nuevo insumo
+    </button>
+  </header>
+
+  <article class="admin-card">
+    <div class="admin-card__toolbar">
+      <div class="admin-card__search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          type="search"
+          [formControl]="searchControl"
+          placeholder="Buscar por nombre, unidad o estado..."
+          aria-label="Buscar insumos"
+        />
+      </div>
+      <span class="admin-card__count" *ngIf="!loading">
+        {{ totalItems }} resultado{{ totalItems === 1 ? '' : 's' }}
+      </span>
+    </div>
+
+    <div *ngIf="loading" class="admin-card__state">Cargando insumos...</div>
+
+    <div *ngIf="!loading && errorMessage" class="admin-card__state admin-card__state--error">
+      {{ errorMessage }}
+      <button type="button" (click)="loadInsumos()">Reintentar</button>
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && insumos.length === 0" class="admin-card__state">
+      No se encontraron insumos.
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && insumos.length > 0" class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Unidad</th>
+            <th>Stock actual</th>
+            <th>Stock mínimo</th>
+            <th>Costo</th>
+            <th>Estado stock</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let insumo of insumos">
+            <td data-label="ID">{{ insumo.id_insumo }}</td>
+            <td data-label="Nombre"><strong>{{ insumo.nombre }}</strong></td>
+            <td data-label="Unidad">{{ insumo.unidad_medida }}</td>
+            <td data-label="Stock actual">{{ insumo.stock_actual }}</td>
+            <td data-label="Stock mínimo">{{ insumo.stock_minimo }}</td>
+            <td data-label="Costo">{{ formatCostoConUnidad(insumo) }}</td>
+            <td data-label="Estado stock">
+              <span
+                *ngIf="isStockBajo(insumo)"
+                class="status-badge status-badge--warning"
+              >
+                Stock bajo
+              </span>
+              <span
+                *ngIf="!isStockBajo(insumo)"
+                class="status-badge status-badge--active"
+              >
+                OK
+              </span>
+            </td>
+            <td data-label="Acciones">
+              <button type="button" class="table-action" (click)="openEditModal(insumo)">
+                Editar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-paginator
+      *ngIf="!loading && !errorMessage && totalItems > 0"
+      [page]="page"
+      [pageSize]="pageSize"
+      [totalItems]="totalItems"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-paginator>
+  </article>
+</section>
+
+<div
+  *ngIf="showFormModal"
+  class="modal-overlay"
+  (click)="closeFormModal()"
+  aria-modal="true"
+  role="dialog"
+>
+  <div class="modal" (click)="$event.stopPropagation()">
+    <header class="modal__header">
+      <div>
+        <h2>{{ isEditing ? 'Editar insumo' : 'Nuevo insumo' }}</h2>
+        <p>El stock se registra en la unidad elegida (gramos, unidades, ml o litros).</p>
+      </div>
+      <button
+        type="button"
+        class="modal__close"
+        aria-label="Cerrar"
+        [disabled]="saving"
+        (click)="closeFormModal()"
+      >
+        ×
+      </button>
+    </header>
+
+    <form class="modal__form" [formGroup]="insumoForm" (ngSubmit)="submitForm()">
+      <div *ngIf="formError" class="modal__error">{{ formError }}</div>
+
+      <app-input
+        label="Nombre"
+        placeholder="Ej: Carne artesanal"
+        formControlName="nombre"
+        [error]="nombreError"
+      ></app-input>
+
+      <div class="form-field" [class.form-field--error]="unidadMedidaError">
+        <label class="form-field__label" for="insumo-unidad">Unidad de medida</label>
+        <select id="insumo-unidad" class="form-field__select" formControlName="unidad_medida">
+          <option value="" disabled>Selecciona una unidad</option>
+          <option *ngFor="let unidad of unidadesMedida" [value]="unidad">{{ unidad }}</option>
+        </select>
+        <span *ngIf="unidadMedidaError" class="form-field__error">{{ unidadMedidaError }}</span>
+      </div>
+
+      <div class="form-grid">
+        <app-input
+          [label]="usesLibraCalculator ? 'Stock actual (gramos)' : 'Stock actual'"
+          type="number"
+          placeholder="0"
+          formControlName="stock_actual"
+          [error]="stockActualError"
+          [hint]="usesLibraCalculator ? 'Ej: 10 libras × 500 g = 5000' : ''"
+        ></app-input>
+
+        <app-input
+          label="Stock mínimo"
+          type="number"
+          placeholder="0"
+          formControlName="stock_minimo"
+          [error]="stockMinimoError"
+        ></app-input>
+      </div>
+
+      <section *ngIf="usesLibraCalculator" class="insumo-costo-box">
+        <h3 class="insumo-costo-box__title">Costo de compra (por libra)</h3>
+        <p class="insumo-costo-box__hint">
+          Ejemplo: compras 10 libras a $10.000 c/u → registra precio por libra $10.000,
+          stock 5000 g y el sistema guarda <strong>$20 por gramo</strong>.
+        </p>
+
+        <div *ngIf="costoGuardadoActual != null" class="insumo-costo-box__actual">
+          Valor guardado hoy:
+          <strong>{{ formatCostoPorUnidad(costoGuardadoActual, 'GRAMO') }}</strong>
+        </div>
+
+        <div class="form-grid">
+          <app-input
+            label="Precio por libra ($)"
+            type="number"
+            placeholder="Ej: 10000"
+            formControlName="precio_por_libra"
+            [error]="precioPorLibraError"
+          ></app-input>
+
+          <app-input
+            label="Gramos por libra"
+            type="number"
+            placeholder="500"
+            formControlName="gramos_por_libra"
+            [error]="gramosPorLibraError"
+            hint="En Colombia suele ser 500 g"
+          ></app-input>
+        </div>
+      </section>
+
+      <section *ngIf="usesCompraTotalCalculator" class="insumo-costo-box">
+        <h3 class="insumo-costo-box__title">Costo de compra total</h3>
+        <p class="insumo-costo-box__hint">
+          Indica cuánto pagaste en total y cuántos {{ unidadLegible(unidadSeleccionada) }}s compraste.
+        </p>
+
+        <div class="form-grid">
+          <app-input
+            label="Total pagado ($)"
+            type="number"
+            placeholder="Ej: 50000"
+            formControlName="costo_compra_total"
+            [error]="costoCompraTotalError"
+          ></app-input>
+
+          <app-input
+            [label]="'Cantidad comprada (' + unidadLegible(unidadSeleccionada) + 's)'"
+            type="number"
+            placeholder="0"
+            formControlName="cantidad_compra"
+            [error]="cantidadCompraError"
+          ></app-input>
+        </div>
+      </section>
+
+      <app-input
+        *ngIf="usesCostoPorUnidad"
+        label="Costo por unidad ($)"
+        type="number"
+        placeholder="Ej: 1200"
+        formControlName="costo_por_unidad"
+        [error]="costoPorUnidadError"
+        hint="Lo que pagas por cada unidad (pan, salchicha, etc.)"
+      ></app-input>
+
+      <p *ngIf="previewCostoUnitario != null && unidadSeleccionada" class="insumo-costo-box__preview">
+        Costo que se guardará:
+        <strong>{{ formatCurrency(previewCostoUnitario) }} / {{ unidadSeleccionada === 'GRAMO' ? 'g' : (unidadSeleccionada === 'UNIDAD' ? 'ud' : unidadSeleccionada === 'MILILITRO' ? 'ml' : 'L') }}</strong>
+      </p>
+
+      <div class="modal__actions">
+        <app-button type="button" variant="secondary" [disabled]="saving" (clicked)="closeFormModal()">
+          Cancelar
+        </app-button>
+        <app-button type="submit" [loading]="saving">
+          {{ isEditing ? 'Guardar cambios' : 'Crear insumo' }}
+        </app-button>
+      </div>
+    </form>
+  </div>
+</div>

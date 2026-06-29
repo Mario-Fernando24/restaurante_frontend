@@ -1,0 +1,213 @@
+<section class="usuarios-page">
+  <header class="usuarios-page__header">
+    <div>
+      <h1>Usuarios</h1>
+      <p>Gestiona los usuarios y roles del sistema.</p>
+    </div>
+    <button type="button" class="usuarios-page__add" (click)="openCreateModal()">
+      + Nuevo usuario
+    </button>
+  </header>
+
+  <article class="usuarios-card">
+    <div class="usuarios-card__toolbar">
+      <div class="usuarios-card__search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          type="search"
+          [formControl]="searchControl"
+          placeholder="Buscar por nombre, correo, rol o estado..."
+          aria-label="Buscar usuarios"
+        />
+      </div>
+      <span class="usuarios-card__count" *ngIf="!loading">
+        {{ totalItems }} resultado{{ totalItems === 1 ? '' : 's' }}
+      </span>
+    </div>
+
+    <div *ngIf="loading" class="usuarios-card__state">Cargando usuarios...</div>
+
+    <div *ngIf="!loading && errorMessage" class="usuarios-card__state usuarios-card__state--error">
+      {{ errorMessage }}
+      <button type="button" (click)="loadUsuarios()">Reintentar</button>
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && usuarios.length === 0" class="usuarios-card__state">
+      No se encontraron usuarios.
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && usuarios.length > 0" class="table-wrap">
+      <table class="usuarios-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Correo</th>
+            <th>Teléfono</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Creación</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let usuario of usuarios">
+            <td data-label="ID">{{ usuario.id_usuario }}</td>
+            <td data-label="Nombre">
+              <strong>{{ getFullName(usuario) }}</strong>
+            </td>
+            <td data-label="Correo">{{ usuario.email }}</td>
+            <td data-label="Teléfono">{{ usuario.telefono }}</td>
+            <td data-label="Rol">{{ usuario.rol.nombre }}</td>
+            <td data-label="Estado">
+              <span
+                class="status-badge"
+                [class.status-badge--active]="isActivo(usuario.estado)"
+                [class.status-badge--inactive]="!isActivo(usuario.estado)"
+              >
+                {{ usuario.estado }}
+              </span>
+            </td>
+            <td data-label="Creación">{{ formatDate(usuario.fecha_creacion) }}</td>
+            <td data-label="Acciones">
+              <div class="usuarios-table__actions">
+                <button
+                  type="button"
+                  class="action-btn action-btn--edit"
+                  (click)="openEditModal(usuario)"
+                >
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  class="action-btn"
+                  [class.action-btn--danger]="isActivo(usuario.estado)"
+                  [class.action-btn--success]="!isActivo(usuario.estado)"
+                  [disabled]="isUpdating(usuario.id_usuario)"
+                  (click)="toggleEstado(usuario)"
+                >
+                  {{ isUpdating(usuario.id_usuario) ? 'Guardando...' : getToggleLabel(usuario.estado) }}
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-paginator
+      *ngIf="!loading && !errorMessage && totalItems > 0"
+      [page]="page"
+      [pageSize]="pageSize"
+      [totalItems]="totalItems"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-paginator>
+  </article>
+</section>
+
+<div
+  *ngIf="showModal"
+  class="user-modal-overlay"
+  (click)="closeModal()"
+  aria-modal="true"
+  role="dialog"
+>
+  <div class="user-modal" (click)="$event.stopPropagation()">
+    <header class="user-modal__header">
+      <div>
+        <h2>{{ modalTitle }}</h2>
+        <p>{{ modalDescription }}</p>
+      </div>
+      <button
+        type="button"
+        class="user-modal__close"
+        aria-label="Cerrar"
+        [disabled]="saving"
+        (click)="closeModal()"
+      >
+        ×
+      </button>
+    </header>
+
+    <form class="user-modal__form" [formGroup]="userForm" (ngSubmit)="submitForm()">
+      <div *ngIf="formError" class="user-modal__error">{{ formError }}</div>
+      <div *ngIf="rolesError" class="user-modal__error">{{ rolesError }}</div>
+
+      <app-input
+        label="Nombre"
+        placeholder="Ej: Juan"
+        formControlName="nombre"
+        [error]="nombreError"
+      ></app-input>
+
+      <app-input
+        label="Apellido"
+        placeholder="Ej: Pérez"
+        formControlName="apellido"
+        [error]="apellidoError"
+      ></app-input>
+
+      <app-input
+        label="Correo electrónico"
+        type="email"
+        placeholder="Ej: juan@restaurante.com"
+        formControlName="email"
+        [error]="emailError"
+        [hint]="modalMode === 'edit' ? 'El correo no se puede cambiar' : ''"
+      ></app-input>
+
+      <app-input
+        label="Teléfono"
+        type="tel"
+        placeholder="Ej: 3001234567"
+        formControlName="telefono"
+        [error]="telefonoError"
+      ></app-input>
+
+      <app-input
+        label="Dirección"
+        placeholder="Ej: Calle 10 # 20-30"
+        formControlName="direccion"
+        [error]="direccionError"
+      ></app-input>
+
+      <div class="form-field" [class.form-field--error]="idRolError">
+        <label class="form-field__label" for="usuario-rol">Rol</label>
+        <select
+          id="usuario-rol"
+          class="form-field__select"
+          formControlName="id_rol"
+          [disabled]="loadingRoles || roles.length === 0"
+        >
+          <option [ngValue]="null" disabled>Selecciona un rol</option>
+          <option *ngFor="let rol of roles" [ngValue]="rol.id_rol">{{ rol.nombre }}</option>
+        </select>
+        <span *ngIf="idRolError" class="form-field__error">{{ idRolError }}</span>
+        <span *ngIf="loadingRoles" class="form-field__hint">Cargando roles...</span>
+      </div>
+
+      <app-input
+        *ngIf="modalMode === 'create'"
+        label="Contraseña"
+        type="password"
+        placeholder="Mínimo 6 caracteres"
+        formControlName="password"
+        suffixIcon="eye"
+        [error]="passwordError"
+      ></app-input>
+
+      <div class="user-modal__actions">
+        <app-button type="button" variant="secondary" [disabled]="saving" (clicked)="closeModal()">
+          Cancelar
+        </app-button>
+        <app-button type="submit" [loading]="saving" [disabled]="loadingRoles || roles.length === 0">
+          {{ submitLabel }}
+        </app-button>
+      </div>
+    </form>
+  </div>
+</div>

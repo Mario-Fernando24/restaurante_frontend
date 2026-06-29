@@ -1,0 +1,206 @@
+<section class="admin-page">
+  <header class="admin-page__header">
+    <div>
+      <h1>Recetas</h1>
+      <p>
+        Indica qué ingredientes se gastan al vender cada producto preparado y revisa cuánto
+        cuesta prepararlo. Configura el costo en <strong>Insumos</strong> (precio por libra → costo por gramo).
+      </p>
+    </div>
+    <button type="button" class="admin-page__add" (click)="openCreateModal()">
+      + Agregar ingrediente
+    </button>
+  </header>
+
+  <article class="admin-card">
+    <div class="admin-card__toolbar">
+      <div class="admin-card__search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          type="search"
+          [formControl]="searchControl"
+          placeholder="Buscar por producto o ingrediente..."
+          aria-label="Buscar recetas"
+        />
+      </div>
+      <span class="admin-card__count" *ngIf="!loading">
+        {{ totalItems }} producto{{ totalItems === 1 ? '' : 's' }} con receta
+      </span>
+    </div>
+
+    <div *ngIf="loading" class="admin-card__state">Cargando recetas...</div>
+
+    <div *ngIf="!loading && errorMessage" class="admin-card__state admin-card__state--error">
+      {{ errorMessage }}
+      <button type="button" (click)="loadRecetas()">Reintentar</button>
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && grupos.length === 0" class="admin-card__state">
+      No hay recetas todavía. Agrega los ingredientes que usa cada producto preparado.
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && grupos.length > 0" class="receta-list">
+      <article *ngFor="let grupo of grupos" class="receta-card">
+        <header class="receta-card__header">
+          <h2 class="receta-card__title">{{ grupo.nombreProducto }}</h2>
+          <p class="receta-card__subtitle">Al vender 1 unidad se descuenta:</p>
+        </header>
+        <ul class="receta-card__ingredientes">
+          <li *ngFor="let linea of grupo.lineas" class="receta-card__item">
+            <div class="receta-card__info">
+              <div class="receta-card__insumo-block">
+                <span class="receta-card__insumo">{{ linea.nombreInsumo }}</span>
+                <span class="receta-card__detalle">{{ linea.costoDetalle }}</span>
+              </div>
+              <div class="receta-card__valores">
+                <span class="receta-card__cantidad">{{ linea.cantidadLabel }}</span>
+                <span class="receta-card__costo">{{ formatCurrency(linea.costoInsumo) }}</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="receta-card__edit"
+              (click)="openEditModal(grupo, linea)"
+              [attr.aria-label]="'Editar ' + linea.nombreInsumo + ' en ' + grupo.nombreProducto"
+            >
+              Editar
+            </button>
+          </li>
+        </ul>
+        <footer class="receta-card__resumen">
+          <div class="receta-card__resumen-row">
+            <span>Costo total insumos</span>
+            <strong>{{ formatCurrency(grupo.costoTotal) }}</strong>
+          </div>
+          <div class="receta-card__resumen-row">
+            <span>Precio de venta</span>
+            <strong>{{ formatCurrency(grupo.precioVenta) }}</strong>
+          </div>
+          <div
+            class="receta-card__resumen-row receta-card__resumen-row--ganancia"
+            [class.receta-card__resumen-row--perdida]="grupo.ganancia < 0"
+          >
+            <span>Ganancia estimada</span>
+            <strong>
+              {{ formatCurrency(grupo.ganancia) }}
+              <small *ngIf="grupo.margenPorcentaje != null">
+                ({{ grupo.margenPorcentaje | number: '1.0-1' }}%)
+              </small>
+            </strong>
+          </div>
+        </footer>
+      </article>
+    </div>
+
+    <app-paginator
+      *ngIf="!loading && !errorMessage && totalItems > 0"
+      [page]="page"
+      [pageSize]="pageSize"
+      [totalItems]="totalItems"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-paginator>
+  </article>
+</section>
+
+<div
+  *ngIf="showFormModal"
+  class="modal-overlay"
+  (click)="closeFormModal()"
+  aria-modal="true"
+  role="dialog"
+>
+  <div class="modal" (click)="$event.stopPropagation()">
+    <header class="modal__header">
+      <div>
+        <h2>{{ isEditing ? 'Editar ingrediente de la receta' : 'Agregar ingrediente a la receta' }}</h2>
+        <p>
+          {{
+            isEditing
+              ? 'Modifica el producto, el ingrediente o la cantidad que se descuenta por venta.'
+              : 'Elige el producto y cuánto de un ingrediente se gasta por cada venta.'
+          }}
+        </p>
+      </div>
+      <button
+        type="button"
+        class="modal__close"
+        aria-label="Cerrar"
+        [disabled]="saving"
+        (click)="closeFormModal()"
+      >
+        ×
+      </button>
+    </header>
+
+    <form class="modal__form" [formGroup]="recetaForm" (ngSubmit)="submitForm()">
+      <div *ngIf="formError" class="modal__error">{{ formError }}</div>
+      <div *ngIf="selectorsError" class="modal__error">{{ selectorsError }}</div>
+
+      <div class="form-field" [class.form-field--error]="idProductoError">
+        <label class="form-field__label" for="receta-producto">¿Qué producto preparas?</label>
+        <select
+          id="receta-producto"
+          class="form-field__select"
+          formControlName="id_producto"
+          [disabled]="loadingSelectors || productos.length === 0"
+        >
+          <option [ngValue]="null" disabled>Selecciona un producto</option>
+          <option *ngFor="let producto of productos" [ngValue]="producto.id_producto">
+            {{ producto.nombre }}
+          </option>
+        </select>
+        <span *ngIf="idProductoError" class="form-field__error">{{ idProductoError }}</span>
+        <span *ngIf="loadingSelectors" class="form-field__hint">Cargando productos...</span>
+        <span *ngIf="!loadingSelectors && productos.length === 0" class="form-field__hint">
+          No hay productos tipo PREPARADO. Créalos primero en Productos.
+        </span>
+      </div>
+
+      <div class="form-field" [class.form-field--error]="idInsumoError">
+        <label class="form-field__label" for="receta-insumo">¿Qué ingrediente usa?</label>
+        <select
+          id="receta-insumo"
+          class="form-field__select"
+          formControlName="id_insumo"
+          [disabled]="insumos.length === 0"
+        >
+          <option [ngValue]="null" disabled>Selecciona un ingrediente</option>
+          <option *ngFor="let insumo of insumos" [ngValue]="insumo.id_insumo">
+            {{ insumo.nombre }} ({{ insumo.unidad_medida | lowercase }})
+          </option>
+        </select>
+        <span *ngIf="idInsumoError" class="form-field__error">{{ idInsumoError }}</span>
+      </div>
+
+      <app-input
+        label="¿Cuánto se gasta por cada venta?"
+        type="number"
+        placeholder="Ej: 1"
+        formControlName="cantidad_usada"
+        [error]="cantidadUsadaError"
+        [hint]="cantidadHint"
+      ></app-input>
+
+      <p *ngIf="previewCostoInsumo" class="receta-form__preview">
+        Costo estimado de este ingrediente: <strong>{{ previewCostoInsumo }}</strong>
+      </p>
+
+      <div class="modal__actions">
+        <app-button type="button" variant="secondary" [disabled]="saving" (clicked)="closeFormModal()">
+          Cancelar
+        </app-button>
+        <app-button
+          type="submit"
+          [loading]="saving"
+          [disabled]="loadingSelectors || productos.length === 0 || insumos.length === 0"
+        >
+          {{ isEditing ? 'Guardar cambios' : 'Guardar' }}
+        </app-button>
+      </div>
+    </form>
+  </div>
+</div>

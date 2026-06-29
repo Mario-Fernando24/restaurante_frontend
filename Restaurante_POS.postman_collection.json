@@ -1,0 +1,1203 @@
+{
+  "info": {
+    "_postman_id": "restaurante-pos-collection",
+    "name": "Restaurante POS - API Completa",
+    "description": "Colección completa del backend POS/Restaurante.\n\n## Orden sugerido\n1. **Login** → guarda `token` automáticamente\n2. **Catálogo** → categorías, clientes, insumos, productos, recetas (crear catálogo = Administrador)\n3. **Caja** → métodos de pago → abrir arqueo → vender → cerrar arqueo\n\n## Imagen de producto (opcional)\n**Recomendado:** enviar `imagen_base64` en JSON. El servidor guarda el archivo en disco y responde con URL (`imagen`).\n- Sin imagen: JSON sin `imagen_base64`\n- Con imagen: JSON con `imagen_base64` (base64 puro o `data:image/png;base64,...`)\n- Alternativa: `multipart/form-data` con campo `imagen`\n- Quitar imagen: `PUT` con `{ \"eliminar_imagen\": true }`\n4. **Auditoría** → solo Administrador\n\n## Métodos de pago (`pagos` en venta)\n| Código | Referencia obligatoria |\n|--------|------------------------|\n| EFECTIVO | No |\n| TARJETA | Sí — voucher/autorización datáfono |\n| NEQUI | Sí — comprobante transferencia |\n| BANCOLOMBIA | Sí |\n| DAVIPLATA | Sí |\n| NU | Sí |\n| DALE | Sí |\n| TRANSFERENCIA | Sí — transferencia bancaria genérica |\n\n## Variables\n`base_url` · `token` · `email` · `password` · `id_usuario` · `id_cliente` · `id_categoria` · `id_insumo` · `id_producto` · `id_arqueo`\n\n## Roles\n1=Administrador · 2=Cajero · 3=Mesero · 4=Cocina",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000/api"
+    },
+    {
+      "key": "email",
+      "value": "mariocamila24@gmail.com"
+    },
+    {
+      "key": "password",
+      "value": "Temporal2022*"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "id_usuario",
+      "value": "1"
+    },
+    {
+      "key": "id_cliente",
+      "value": "1"
+    },
+    {
+      "key": "id_categoria",
+      "value": "1"
+    },
+    {
+      "key": "id_insumo",
+      "value": "1"
+    },
+    {
+      "key": "id_producto",
+      "value": "1"
+    },
+    {
+      "key": "id_arqueo",
+      "value": "1"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "01 - Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.token) {",
+                  "        pm.collectionVariables.set('token', json.token);",
+                  "        try { pm.environment.set('token', json.token); } catch (e) {}",
+                  "    }",
+                  "    if (json.usuario && json.usuario.id_usuario) {",
+                  "        pm.collectionVariables.set('id_usuario', json.usuario.id_usuario);",
+                  "        try { pm.environment.set('id_usuario', json.usuario.id_usuario); } catch (e) {}",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{base_url}}/auth/login",
+            "description": "Guarda automáticamente `token` e `id_usuario`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Usuarios",
+      "item": [
+        {
+          "name": "Listar roles",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "url": "{{base_url}}/roles"
+          }
+        },
+        {
+          "name": "Listar usuarios",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/usuarios"
+          }
+        },
+        {
+          "name": "Crear usuario",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.usuario && json.usuario.id_usuario) {",
+                  "        pm.collectionVariables.set('id_usuario', json.usuario.id_usuario);",
+                  "        try { pm.environment.set('id_usuario', json.usuario.id_usuario); } catch (e) {}",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Juan\",\n  \"apellido\": \"Pérez\",\n  \"email\": \"juan.perez@email.com\",\n  \"password\": \"Password123*\",\n  \"id_rol\": 2,\n  \"telefono\": \"3001234567\",\n  \"direccion\": \"Calle 10 #20-30\"\n}"
+            },
+            "url": "{{base_url}}/usuarios/crear",
+            "description": "Roles: 1=Administrador · 2=Cajero · 3=Mesero · 4=Cocina"
+          }
+        },
+        {
+          "name": "Actualizar usuario",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Mario\",\n  \"apellido\": \"Muñoz\",\n  \"telefono\": \"3009998877\",\n  \"direccion\": \"Medellín\",\n  \"id_rol\": 1,\n  \"estado\": \"Activo\"\n}"
+            },
+            "url": "{{base_url}}/usuarios/{{id_usuario}}/actualizar"
+          }
+        },
+        {
+          "name": "Cambiar estado usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nuevo_estado\": \"Inactivo\"\n}"
+            },
+            "url": "{{base_url}}/usuarios/{{id_usuario}}/cambiar_estado"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Categorías",
+      "item": [
+        {
+          "name": "Listar categorías",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/categorias"
+          }
+        },
+        {
+          "name": "Crear categoría",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.body && json.body.id_categoria) {",
+                  "        pm.collectionVariables.set('id_categoria', json.body.id_categoria);",
+                  "        try { pm.environment.set('id_categoria', json.body.id_categoria); } catch (e) {}",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Bebidas\",\n  \"descripcion\": \"Gaseosas, jugos y cervezas\"\n}"
+            },
+            "url": "{{base_url}}/categorias/crear"
+          }
+        },
+        {
+          "name": "Cambiar estado categoría",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nuevo_estado\": \"Inactivo\"\n}"
+            },
+            "url": "{{base_url}}/categorias/{{id_categoria}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Clientes",
+      "item": [
+        {
+          "name": "Listar clientes",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/clientes"
+          }
+        },
+        {
+          "name": "Crear cliente",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.body && json.body.id_cliente) {",
+                  "        pm.collectionVariables.set('id_cliente', json.body.id_cliente);",
+                  "        try { pm.environment.set('id_cliente', json.body.id_cliente); } catch (e) {}",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tipo_usuario\": \"Natural\",\n  \"tipo_documento\": 301,\n  \"numero_documento\": \"1234567890\",\n  \"nombre\": \"Carlos\",\n  \"apellido\": \"García\",\n  \"correo\": \"carlos@email.com\",\n  \"telefono\": \"3001234567\",\n  \"ciudad\": \"Medellín\",\n  \"departamento\": \"Antioquia\",\n  \"pais\": \"Colombia\",\n  \"direccion\": \"Calle 50 #30-20\"\n}"
+            },
+            "url": "{{base_url}}/clientes/crear",
+            "description": "Tipos documento: 301=Cédula · 302=T.I. · 303=NIT · 304=Pasaporte · 305–309=otros"
+          }
+        },
+        {
+          "name": "Actualizar cliente",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Carlos\",\n  \"apellido\": \"García López\",\n  \"telefono\": \"3009998877\",\n  \"ciudad\": \"Bogotá\",\n  \"estado\": \"Activo\"\n}"
+            },
+            "url": "{{base_url}}/clientes/{{id_cliente}}/actualizar"
+          }
+        },
+        {
+          "name": "Cambiar estado cliente",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"estado\": \"Inactivo\"\n}"
+            },
+            "url": "{{base_url}}/clientes/{{id_cliente}}/estado"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Inventario",
+      "item": [
+        {
+          "name": "Listar insumos",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/insumos"
+          }
+        },
+        {
+          "name": "Crear insumo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.body && json.body.id_insumo) {",
+                  "        pm.collectionVariables.set('id_insumo', json.body.id_insumo);",
+                  "        try { pm.environment.set('id_insumo', json.body.id_insumo); } catch (e) {}",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Carne\",\n  \"unidad_medida\": \"GRAMO\",\n  \"stock_actual\": 5000,\n  \"stock_minimo\": 500,\n  \"costo_unitario\": 25\n}"
+            },
+            "url": "{{base_url}}/insumos/crear",
+            "description": "Solo Administrador. Unidades: GRAMO | UNIDAD | MILILITRO | LITRO"
+          }
+        },
+        {
+          "name": "Crear insumo - Pan hamburguesa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Pan hamburguesa\",\n  \"unidad_medida\": \"UNIDAD\",\n  \"stock_actual\": 100,\n  \"stock_minimo\": 20,\n  \"costo_unitario\": 1500\n}"
+            },
+            "url": "{{base_url}}/insumos/crear"
+          }
+        },
+        {
+          "name": "Crear insumo - Gaseosa",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Gaseosa\",\n  \"unidad_medida\": \"UNIDAD\",\n  \"stock_actual\": 200,\n  \"stock_minimo\": 30,\n  \"costo_unitario\": 2500\n}"
+            },
+            "url": "{{base_url}}/insumos/crear"
+          }
+        },
+        {
+          "name": "Listar productos",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/productos"
+          }
+        },
+        {
+          "name": "Crear producto - sin imagen",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.body && json.body.id_producto) {",
+                  "        pm.collectionVariables.set('id_producto', json.body.id_producto);",
+                  "        try { pm.environment.set('id_producto', json.body.id_producto); } catch (e) {}",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_categoria\": {{id_categoria}},\n  \"nombre\": \"Hamburguesa sencilla\",\n  \"descripcion\": \"Hamburguesa clásica con carne y pan\",\n  \"precio_venta\": 18000,\n  \"tipo_producto\": \"PREPARADO\"\n}"
+            },
+            "url": "{{base_url}}/productos/crear",
+            "description": "Solo Administrador. Tipos: PREPARADO | VENTA_DIRECTA. Sin `imagen_base64`."
+          }
+        },
+        {
+          "name": "Crear producto - con imagen base64 (recomendado)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.body && json.body.id_producto) {",
+                  "        pm.collectionVariables.set('id_producto', json.body.id_producto);",
+                  "        try { pm.environment.set('id_producto', json.body.id_producto); } catch (e) {}",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_categoria\": {{id_categoria}},\n  \"nombre\": \"Hamburguesa con foto\",\n  \"descripcion\": \"Imagen enviada en base64\",\n  \"precio_venta\": 18000,\n  \"tipo_producto\": \"PREPARADO\",\n  \"imagen_base64\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==\"\n}"
+            },
+            "url": "{{base_url}}/productos/crear",
+            "description": "**Forma recomendada.** Campo opcional `imagen_base64`.\n\nAcepta:\n- Base64 puro\n- Data URI: `data:image/png;base64,...`\n\nEl servidor decodifica y guarda el archivo. La respuesta trae `imagen` como URL.\n\nNo guarda base64 en la base de datos."
+          }
+        },
+        {
+          "name": "Crear producto - con imagen archivo (alternativa)",
+          "request": {
+            "method": "POST",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "id_categoria",
+                  "value": "{{id_categoria}}",
+                  "type": "text"
+                },
+                {
+                  "key": "nombre",
+                  "value": "Hamburguesa archivo",
+                  "type": "text"
+                },
+                {
+                  "key": "descripcion",
+                  "value": "Subida por multipart",
+                  "type": "text"
+                },
+                {
+                  "key": "precio_venta",
+                  "value": "18000",
+                  "type": "text"
+                },
+                {
+                  "key": "tipo_producto",
+                  "value": "PREPARADO",
+                  "type": "text"
+                },
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": [],
+                  "description": "JPG, PNG, WEBP o GIF (máx. 5 MB)"
+                }
+              ]
+            },
+            "url": "{{base_url}}/productos/crear",
+            "description": "Alternativa a base64. No mezclar con `imagen_base64`."
+          }
+        },
+        {
+          "name": "Actualizar producto - datos",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Hamburguesa especial\",\n  \"precio_venta\": 20000,\n  \"descripcion\": \"Nueva receta\"\n}"
+            },
+            "url": "{{base_url}}/productos/{{id_producto}}/actualizar"
+          }
+        },
+        {
+          "name": "Actualizar producto - imagen base64",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"imagen_base64\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==\"\n}"
+            },
+            "url": "{{base_url}}/productos/{{id_producto}}/actualizar",
+            "description": "Reemplaza la imagen actual. Reemplaza el base64 por tu imagen real."
+          }
+        },
+        {
+          "name": "Actualizar producto - imagen archivo",
+          "request": {
+            "method": "PUT",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "imagen",
+                  "type": "file",
+                  "src": [],
+                  "description": "Nueva imagen del producto"
+                }
+              ]
+            },
+            "url": "{{base_url}}/productos/{{id_producto}}/actualizar"
+          }
+        },
+        {
+          "name": "Actualizar producto - quitar imagen",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eliminar_imagen\": true\n}"
+            },
+            "url": "{{base_url}}/productos/{{id_producto}}/actualizar"
+          }
+        },
+        {
+          "name": "Crear producto - Gaseosa personal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_categoria\": {{id_categoria}},\n  \"nombre\": \"Gaseosa personal\",\n  \"descripcion\": \"Gaseosa 400ml\",\n  \"precio_venta\": 5000,\n  \"tipo_producto\": \"VENTA_DIRECTA\"\n}"
+            },
+            "url": "{{base_url}}/productos/crear"
+          }
+        },
+        {
+          "name": "Crear producto - Cerveza",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_categoria\": {{id_categoria}},\n  \"nombre\": \"Cerveza\",\n  \"descripcion\": \"Cerveza botella\",\n  \"precio_venta\": 8000,\n  \"tipo_producto\": \"VENTA_DIRECTA\"\n}"
+            },
+            "url": "{{base_url}}/productos/crear"
+          }
+        },
+        {
+          "name": "Listar recetas producto",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/recetas-producto"
+          }
+        },
+        {
+          "name": "Crear receta - Hamburguesa + Carne",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_producto\": {{id_producto}},\n  \"id_insumo\": {{id_insumo}},\n  \"cantidad_usada\": 150\n}"
+            },
+            "url": "{{base_url}}/recetas-producto/crear"
+          }
+        },
+        {
+          "name": "Crear receta - Hamburguesa + Pan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_producto\": {{id_producto}},\n  \"id_insumo\": 2,\n  \"cantidad_usada\": 1\n}"
+            },
+            "url": "{{base_url}}/recetas-producto/crear"
+          }
+        },
+        {
+          "name": "Crear receta - Gaseosa personal",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_producto\": 2,\n  \"id_insumo\": 3,\n  \"cantidad_usada\": 1\n}"
+            },
+            "url": "{{base_url}}/recetas-producto/crear"
+          }
+        },
+        {
+          "name": "Listar movimientos inventario",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/movimientos-inventario"
+          }
+        },
+        {
+          "name": "Descontar producto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_producto\": {{id_producto}},\n  \"cantidad\": 2,\n  \"motivo\": \"Venta en mesa 5\"\n}"
+            },
+            "url": "{{base_url}}/inventario/descontar-producto",
+            "description": "Cajero/Administrador. Requiere arqueo abierto."
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Caja",
+      "item": [
+        {
+          "name": "Métodos de pago",
+          "item": [
+            {
+              "name": "Listar métodos de pago",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/metodos-pago",
+                "description": "GET /api/metodos-pago/\n\nDevuelve cada método con `requiere_referencia` y `tipo` (EFECTIVO | TARJETA | TRANSFERENCIA)."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Arqueos",
+          "item": [
+            {
+              "name": "Abrir arqueo",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "if (pm.response.code === 201) {",
+                      "    const json = pm.response.json();",
+                      "    if (json.body && json.body.id_arqueo) {",
+                      "        pm.collectionVariables.set('id_arqueo', json.body.id_arqueo);",
+                      "        try { pm.environment.set('id_arqueo', json.body.id_arqueo); } catch (e) {}",
+                      "    }",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"monto_apertura\": 100000,\n  \"observacion\": \"Apertura turno mañana\"\n}"
+                },
+                "url": "{{base_url}}/arqueos/abrir"
+              }
+            },
+            {
+              "name": "Arqueo activo",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/arqueos/activo"
+              }
+            },
+            {
+              "name": "Listar arqueos",
+              "request": {
+                "method": "GET",
+                "url": "{{base_url}}/arqueos"
+              }
+            },
+            {
+              "name": "Cerrar arqueo",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"monto_cierre_real\": 136000,\n  \"observacion\": \"Cierre turno mañana\"\n}"
+                },
+                "url": "{{base_url}}/arqueos/{{id_arqueo}}/cerrar",
+                "description": "Efectivo esperado = monto_apertura + ventas pagadas en EFECTIVO del arqueo."
+              }
+            }
+          ]
+        },
+        {
+          "name": "Ventas",
+          "item": [
+            {
+              "name": "Crear venta - Efectivo",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"id_cliente\": {{id_cliente}},\n  \"detalle\": [\n    { \"id_producto\": {{id_producto}}, \"cantidad\": 2 }\n  ],\n  \"pagos\": [\n    { \"metodo_pago\": \"EFECTIVO\", \"monto\": 36000 }\n  ]\n}"
+                },
+                "url": "{{base_url}}/ventas/crear",
+                "description": "EFECTIVO no lleva `referencia`. Total pagos = total venta."
+              }
+            },
+            {
+              "name": "Crear venta - Tarjeta (voucher)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"id_cliente\": {{id_cliente}},\n  \"detalle\": [\n    { \"id_producto\": {{id_producto}}, \"cantidad\": 1 }\n  ],\n  \"pagos\": [\n    {\n      \"metodo_pago\": \"TARJETA\",\n      \"monto\": 18000,\n      \"referencia\": \"A987654\"\n    }\n  ]\n}"
+                },
+                "url": "{{base_url}}/ventas/crear",
+                "description": "Obligatorio `referencia` = voucher o autorización del datáfono."
+              }
+            },
+            {
+              "name": "Crear venta - Nequi",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"id_cliente\": {{id_cliente}},\n  \"detalle\": [\n    { \"id_producto\": {{id_producto}}, \"cantidad\": 1 }\n  ],\n  \"pagos\": [\n    {\n      \"metodo_pago\": \"NEQUI\",\n      \"monto\": 18000,\n      \"referencia\": \"M12345678\"\n    }\n  ]\n}"
+                },
+                "url": "{{base_url}}/ventas/crear"
+              }
+            },
+            {
+              "name": "Crear venta - Bancolombia",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"detalle\": [\n    { \"id_producto\": {{id_producto}}, \"cantidad\": 1 }\n  ],\n  \"pagos\": [\n    {\n      \"metodo_pago\": \"BANCOLOMBIA\",\n      \"monto\": 18000,\n      \"referencia\": \"TRF-998877\"\n    }\n  ]\n}"
+                },
+                "url": "{{base_url}}/ventas/crear"
+              }
+            },
+            {
+              "name": "Crear venta - Daviplata",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"detalle\": [\n    { \"id_producto\": {{id_producto}}, \"cantidad\": 1 }\n  ],\n  \"pagos\": [\n    {\n      \"metodo_pago\": \"DAVIPLATA\",\n      \"monto\": 18000,\n      \"referencia\": \"DP-554433\"\n    }\n  ]\n}"
+                },
+                "url": "{{base_url}}/ventas/crear"
+              }
+            },
+            {
+              "name": "Crear venta - Nu",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"detalle\": [\n    { \"id_producto\": {{id_producto}}, \"cantidad\": 1 }\n  ],\n  \"pagos\": [\n    {\n      \"metodo_pago\": \"NU\",\n      \"monto\": 18000,\n      \"referencia\": \"NU-778899\"\n    }\n  ]\n}"
+                },
+                "url": "{{base_url}}/ventas/crear"
+              }
+            },
+            {
+              "name": "Crear venta - Dale",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"detalle\": [\n    { \"id_producto\": {{id_producto}}, \"cantidad\": 1 }\n  ],\n  \"pagos\": [\n    {\n      \"metodo_pago\": \"DALE\",\n      \"monto\": 18000,\n      \"referencia\": \"DL-112233\"\n    }\n  ]\n}"
+                },
+                "url": "{{base_url}}/ventas/crear"
+              }
+            },
+            {
+              "name": "Crear venta - Transferencia bancaria",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"detalle\": [\n    { \"id_producto\": {{id_producto}}, \"cantidad\": 1 }\n  ],\n  \"pagos\": [\n    {\n      \"metodo_pago\": \"TRANSFERENCIA\",\n      \"monto\": 18000,\n      \"referencia\": \"REF-BANCO-001\"\n    }\n  ]\n}"
+                },
+                "url": "{{base_url}}/ventas/crear",
+                "description": "Transferencia bancaria genérica (otro banco/app no listado)."
+              }
+            },
+            {
+              "name": "Crear venta - Mixto (efectivo + tarjeta)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"id_cliente\": {{id_cliente}},\n  \"detalle\": [\n    { \"id_producto\": 1, \"cantidad\": 1 },\n    { \"id_producto\": 2, \"cantidad\": 2 }\n  ],\n  \"pagos\": [\n    { \"metodo_pago\": \"EFECTIVO\", \"monto\": 20000 },\n    {\n      \"metodo_pago\": \"TARJETA\",\n      \"monto\": 8000,\n      \"referencia\": \"VCH-445566\"\n    }\n  ]\n}"
+                },
+                "url": "{{base_url}}/ventas/crear",
+                "description": "Ejemplo: hamburguesa 18000 + 2 gaseosas 10000 = 28000 total."
+              }
+            },
+            {
+              "name": "Crear venta - Mixto (Bancolombia + Dale)",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"detalle\": [\n    { \"id_producto\": {{id_producto}}, \"cantidad\": 2 }\n  ],\n  \"pagos\": [\n    {\n      \"metodo_pago\": \"BANCOLOMBIA\",\n      \"monto\": 20000,\n      \"referencia\": \"TRF-998877\"\n    },\n    {\n      \"metodo_pago\": \"DALE\",\n      \"monto\": 16000,\n      \"referencia\": \"DL-112233\"\n    }\n  ]\n}"
+                },
+                "url": "{{base_url}}/ventas/crear",
+                "description": "2 productos a 18000 = 36000. Cada transferencia con su referencia."
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 - Auditoría",
+      "item": [
+        {
+          "name": "Listar toda la auditoría",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/auditoria",
+            "description": "Solo Administrador."
+          }
+        },
+        {
+          "name": "Filtrar por módulo VENTAS",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/auditoria?modulo=VENTAS"
+          }
+        },
+        {
+          "name": "Filtrar por módulo CAJA",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/auditoria?modulo=CAJA"
+          }
+        },
+        {
+          "name": "Filtrar por módulo INVENTARIO",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/auditoria?modulo=INVENTARIO"
+          }
+        },
+        {
+          "name": "Filtrar por arqueo",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/auditoria?id_arqueo={{id_arqueo}}"
+          }
+        },
+        {
+          "name": "Filtrar por usuario",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/auditoria?id_usuario={{id_usuario}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - Flujo POS (orden sugerido)",
+      "description": "Ejecutar en orden con Collection Runner.",
+      "item": [
+        {
+          "name": "1. Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.token) {",
+                  "        pm.collectionVariables.set('token', json.token);",
+                  "        try { pm.environment.set('token', json.token); } catch (e) {}",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}"
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        },
+        {
+          "name": "2. Listar métodos de pago",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/metodos-pago"
+          }
+        },
+        {
+          "name": "3. Abrir arqueo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const json = pm.response.json();",
+                  "    if (json.body && json.body.id_arqueo) {",
+                  "        pm.collectionVariables.set('id_arqueo', json.body.id_arqueo);",
+                  "        try { pm.environment.set('id_arqueo', json.body.id_arqueo); } catch (e) {}",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"monto_apertura\": 100000,\n  \"observacion\": \"Inicio de turno\"\n}"
+            },
+            "url": "{{base_url}}/arqueos/abrir"
+          }
+        },
+        {
+          "name": "4. Venta en efectivo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id_cliente\": {{id_cliente}},\n  \"detalle\": [\n    { \"id_producto\": {{id_producto}}, \"cantidad\": 1 }\n  ],\n  \"pagos\": [\n    { \"metodo_pago\": \"EFECTIVO\", \"monto\": 18000 }\n  ]\n}"
+            },
+            "url": "{{base_url}}/ventas/crear"
+          }
+        },
+        {
+          "name": "5. Venta por Nequi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"detalle\": [\n    { \"id_producto\": {{id_producto}}, \"cantidad\": 1 }\n  ],\n  \"pagos\": [\n    {\n      \"metodo_pago\": \"NEQUI\",\n      \"monto\": 18000,\n      \"referencia\": \"M12345678\"\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/ventas/crear"
+          }
+        },
+        {
+          "name": "6. Ver movimientos inventario",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/movimientos-inventario"
+          }
+        },
+        {
+          "name": "7. Cerrar arqueo",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"monto_cierre_real\": 118000,\n  \"observacion\": \"Fin de turno\"\n}"
+            },
+            "url": "{{base_url}}/arqueos/{{id_arqueo}}/cerrar",
+            "description": "118000 = 100000 apertura + 18000 venta efectivo (Nequi no suma al efectivo físico)."
+          }
+        },
+        {
+          "name": "8. Ver auditoría del arqueo",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/auditoria?id_arqueo={{id_arqueo}}"
+          }
+        }
+      ]
+    }
+  ]
+}

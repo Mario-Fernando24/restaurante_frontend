@@ -13,7 +13,7 @@ import {
 import { TokenStorageService } from './token-storage.service';
 import { UserStorageService } from './user-storage.service';
 
-const LOGIN_ENDPOINT = '/auth/login/';
+const LOGIN_ENDPOINT = '/auth/login';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {

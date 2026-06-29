@@ -14,18 +14,24 @@ export class ApiService {
   constructor(private http: HttpClient) {}
 
   private url(path: string): string {
-    const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-    return `${this.baseUrl}${normalizedPath}`;
+    const withLeadingSlash = path.startsWith('/') ? path : `/${path}`;
+    // Django expone rutas sin barra final (ej. /api/categorias, no /api/categorias/)
+    const withoutTrailingSlash = withLeadingSlash.replace(/\/+$/, '') || '/';
+    return `${this.baseUrl}${withoutTrailingSlash}`;
   }
 
   get<T>(path: string, params?: Record<string, string>): Observable<T> {
-    const httpParams = params
-      ? new HttpParams({ fromObject: params })
-      : undefined;
+    let requestUrl = this.url(path);
 
-    return this.http.get<T>(this.url(path), {
+    if (params) {
+      const query = new HttpParams({ fromObject: params }).toString();
+      if (query) {
+        requestUrl = `${requestUrl}?${query}`;
+      }
+    }
+
+    return this.http.get<T>(requestUrl, {
       headers: this.jsonHeaders,
-      params: httpParams,
     });
   }
 
@@ -33,6 +39,10 @@ export class ApiService {
     return this.http.post<T>(this.url(path), body, {
       headers: this.jsonHeaders,
     });
+  }
+
+  postFormData<T>(path: string, body: FormData): Observable<T> {
+    return this.http.post<T>(this.url(path), body);
   }
 
   put<T>(path: string, body: unknown): Observable<T> {

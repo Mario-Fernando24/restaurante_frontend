@@ -1,0 +1,81 @@
+<section class="turno-page">
+  <header class="turno-page__header">
+    <div>
+      <h1>Gestión de turno</h1>
+      <p>Abre o cierra tu arqueo de caja para operar el punto de venta.</p>
+    </div>
+  </header>
+
+  <div *ngIf="loading" class="turno-page__state">Consultando turno activo...</div>
+
+  <div *ngIf="!loading && errorMessage" class="turno-page__state turno-page__state--error">
+    {{ errorMessage }}
+    <app-button variant="secondary" size="sm" (clicked)="loadArqueo()">Reintentar</app-button>
+  </div>
+
+  <ng-container *ngIf="!loading && !errorMessage">
+    <article *ngIf="!isAbierto" class="turno-card">
+      <h2>Abrir turno</h2>
+      <p>No hay un arqueo activo. Ingresa el monto inicial en efectivo para comenzar.</p>
+
+      <form class="turno-form" [formGroup]="abrirForm" (ngSubmit)="submitAbrir()">
+        <app-input
+          label="Monto de apertura"
+          type="number"
+          placeholder="0"
+          formControlName="monto_apertura"
+          [error]="montoAperturaError"
+        ></app-input>
+
+        <app-button type="submit" [loading]="submitting" [fullWidth]="true">
+          Abrir turno
+        </app-button>
+      </form>
+    </article>
+
+    <ng-container *ngIf="isAbierto && arqueo">
+      <article class="turno-summary">
+        <div class="turno-summary__badge">Turno abierto</div>
+        <h2>Resumen del arqueo</h2>
+
+        <dl class="turno-summary__grid">
+          <div>
+            <dt>ID</dt>
+            <dd>#{{ arqueo.id_arqueo }}</dd>
+          </div>
+          <div>
+            <dt>Monto apertura</dt>
+            <dd>{{ formatCurrency(arqueo.monto_apertura) }}</dd>
+          </div>
+          <div>
+            <dt>Fecha apertura</dt>
+            <dd>{{ formatDate(arqueo.fecha_apertura) }}</dd>
+          </div>
+          <div>
+            <dt>Estado</dt>
+            <dd class="turno-summary__estado">{{ arqueo.estado }}</dd>
+          </div>
+        </dl>
+      </article>
+
+      <article class="turno-card">
+        <h2>Cerrar turno</h2>
+        <p>Cuenta el efectivo en caja e ingresa el monto real para cerrar el arqueo.</p>
+
+        <form class="turno-form" [formGroup]="cerrarForm" (ngSubmit)="submitCerrar()">
+          <app-input
+            label="Monto efectivo real"
+            type="number"
+            placeholder="0"
+            formControlName="monto_cierre_real"
+            [error]="montoCierreError"
+          ></app-input>
+
+          <app-button type="submit" variant="secondary" [loading]="submitting" [fullWidth]="true">
+            Cerrar turno
+          </app-button>
+        </form>
+      </article>
+    </ng-container>
+  </ng-container>
+</section>

@@ -27,10 +27,6 @@
       </span>
     </div>
 
-    <div *ngIf="actionError" class="categorias-card__alert">
-      {{ actionError }}
-    </div>
-
     <div *ngIf="loading" class="categorias-card__state">Cargando categorías...</div>
 
     <div *ngIf="!loading && errorMessage" class="categorias-card__state categorias-card__state--error">

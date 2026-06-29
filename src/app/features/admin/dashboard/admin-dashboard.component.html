@@ -18,6 +18,14 @@
     </div>
   </header>
 
+  <div *ngIf="loading" class="dashboard__state">Cargando resumen...</div>
+
+  <div *ngIf="!loading && errorMessage" class="dashboard__state dashboard__state--error">
+    {{ errorMessage }}
+    <button type="button" (click)="loadDashboard()">Reintentar</button>
+  </div>
+
+  <ng-container *ngIf="!loading && !errorMessage">
   <div class="kpi-grid">
     <article
       *ngFor="let kpi of kpis"
@@ -83,12 +91,16 @@
 
     <article class="panel panel--sales">
       <header class="panel__header">
-        <h2>Últimas 5 Ventas</h2>
-        <a href="#" class="panel__link">Ver todas</a>
+        <h2>Actividad reciente</h2>
+        <a [routerLink]="routes.ADMIN_AUDITORIA" class="panel__link">Ver auditoría</a>
       </header>
 
-      <ul class="sales-list">
-        <li *ngFor="let sale of recentSales" class="sales-list__item">
+      <p *ngIf="recentActivity.length === 0" class="panel__empty">
+        No hay registros recientes disponibles.
+      </p>
+
+      <ul *ngIf="recentActivity.length > 0" class="sales-list">
+        <li *ngFor="let item of recentActivity" class="sales-list__item">
           <span class="sales-list__icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -96,12 +108,12 @@
             </svg>
           </span>
           <div class="sales-list__info">
-            <strong>{{ sale.id }}</strong>
-            <span>{{ sale.time }} · {{ sale.register }}</span>
+            <strong>{{ item.id }}</strong>
+            <span>{{ item.time }} · {{ item.detail }}</span>
           </div>
           <div class="sales-list__amount">
-            <strong>{{ sale.amount }}</strong>
-            <span class="sales-list__status">{{ sale.status }}</span>
+            <strong>{{ item.amount }}</strong>
+            <span class="sales-list__status">{{ item.status }}</span>
           </div>
         </li>
       </ul>
@@ -128,7 +140,9 @@
           </div>
         </div>
       </div>
-      <p class="panel__note">Bodega Central está casi llena.</p>
+      <p class="panel__note">
+        {{ inventoryPercent }}% de insumos con stock saludable.
+      </p>
     </article>
 
     <article class="guide-card">
@@ -138,4 +152,5 @@
       </div>
     </article>
   </div>
+  </ng-container>
 </section>

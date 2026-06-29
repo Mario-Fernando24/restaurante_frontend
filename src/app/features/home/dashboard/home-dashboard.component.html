@@ -2,54 +2,58 @@
   <header class="dashboard__header">
     <div>
       <h2>Inicio de turno</h2>
-      <p>Tu caja está lista · {{ userEmail }}</p>
+      <p>Hola, {{ userName }} · {{ userEmail }}</p>
     </div>
-    <span class="badge-open">Arqueo abierto</span>
+    <span *ngIf="!loading && !errorMessage && isAbierto" class="badge-open">Arqueo abierto</span>
+    <span *ngIf="!loading && !errorMessage && !isAbierto" class="badge-closed">Sin turno activo</span>
   </header>
 
-  <section class="shift-card">
-    <span class="shift-card__status">
-      <span class="pulse"></span>
-      Sesión activa — {{ shift.caja }}
-    </span>
-    <div class="shift-card__body">
-      <div>
-        <span class="shift-card__label">Efectivo en caja</span>
-        <strong class="shift-card__amount">{{ shift.efectivo }}</strong>
-        <div class="shift-card__mini">
-          <div>
-            <span>Apertura</span>
-            <strong>{{ shift.apertura }}</strong>
-          </div>
-          <div>
-            <span>Ventas hoy</span>
-            <strong>{{ shift.ventasHoy }}</strong>
+  <div *ngIf="loading" class="dashboard__state">Consultando turno activo...</div>
+
+  <div *ngIf="!loading && errorMessage" class="dashboard__state dashboard__state--error">
+    {{ errorMessage }}
+    <button type="button" (click)="loadArqueo()">Reintentar</button>
+  </div>
+
+  <ng-container *ngIf="!loading && !errorMessage">
+    <section *ngIf="isAbierto && arqueo" class="shift-card">
+      <span class="shift-card__status">
+        <span class="pulse"></span>
+        Sesión activa — Turno #{{ arqueo.id_arqueo }}
+      </span>
+      <div class="shift-card__body">
+        <div>
+          <span class="shift-card__label">Monto de apertura</span>
+          <strong class="shift-card__amount">{{ formatCurrency(arqueo.monto_apertura) }}</strong>
+          <div class="shift-card__mini">
+            <div>
+              <span>Estado</span>
+              <strong>{{ arqueo.estado }}</strong>
+            </div>
+            <div>
+              <span>Apertura</span>
+              <strong>{{ formatDate(arqueo.fecha_apertura) }}</strong>
+            </div>
           </div>
         </div>
+        <div class="shift-card__actions">
+          <a [routerLink]="routes.CAJERO_POS" class="btn-pos">Ir a Punto de Venta</a>
+          <a [routerLink]="routes.CAJERO_TURNO" class="btn-turno">Gestionar turno</a>
+        </div>
       </div>
-      <button type="button" class="btn-pos">Ir a Punto de Venta</button>
-    </div>
-  </section>
+    </section>
 
-  <section class="card">
-    <h3>Mis ventas recientes</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Factura</th>
-          <th>Hora</th>
-          <th>Método</th>
-          <th>Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let v of ventas">
-          <td>{{ v.factura }}</td>
-          <td>{{ v.hora }}</td>
-          <td>{{ v.metodo }}</td>
-          <td><strong>{{ v.total }}</strong></td>
-        </tr>
-      </tbody>
-    </table>
-  </section>
+    <section *ngIf="!isAbierto" class="card card--empty">
+      <h3>No hay turno abierto</h3>
+      <p>Abre tu arqueo de caja para comenzar a vender.</p>
+      <a [routerLink]="routes.CAJERO_TURNO" class="btn-pos btn-pos--inline">Abrir turno</a>
+    </section>
+
+    <section class="card">
+      <h3>Actividad reciente</h3>
+      <p class="card__empty-msg">
+        No hay ventas recientes disponibles en este panel.
+      </p>
+    </section>
+  </ng-container>
 </section>

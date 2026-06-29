@@ -32,6 +32,39 @@
   gap: 4px;
 }
 
+.dashboard__state {
+  padding: 20px;
+  margin-bottom: 20px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  &--error {
+    color: var(--color-error);
+    background: var(--color-error-soft);
+
+    button {
+      padding: 8px 14px;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      background: var(--color-surface);
+      cursor: pointer;
+    }
+  }
+}
+
+.panel__empty {
+  margin: 0;
+  padding: 16px 0;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
 .dashboard__filter {
   padding: 8px 16px;
   border: none;

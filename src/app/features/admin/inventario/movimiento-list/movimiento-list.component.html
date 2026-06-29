@@ -1,0 +1,89 @@
+<section class="admin-page">
+  <header class="admin-page__header">
+    <div>
+      <h1>Movimientos de inventario</h1>
+      <p>Consulta el historial de entradas, salidas y ajustes de stock.</p>
+    </div>
+  </header>
+
+  <article class="admin-card">
+    <div class="admin-card__toolbar">
+      <div class="admin-card__filters">
+        <div class="admin-card__search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input
+            type="search"
+            [formControl]="searchControl"
+            placeholder="Buscar por insumo, motivo o usuario..."
+            aria-label="Buscar movimientos"
+          />
+        </div>
+        <div class="admin-card__search">
+          <select [formControl]="tipoControl" aria-label="Filtrar por tipo">
+            <option value="">Todos los tipos</option>
+            <option *ngFor="let tipo of tiposMovimiento" [value]="tipo">{{ tipo }}</option>
+          </select>
+        </div>
+      </div>
+      <span class="admin-card__count" *ngIf="!loading">
+        {{ totalItems }} resultado{{ totalItems === 1 ? '' : 's' }}
+      </span>
+    </div>
+
+    <div *ngIf="loading" class="admin-card__state">Cargando movimientos...</div>
+
+    <div *ngIf="!loading && errorMessage" class="admin-card__state admin-card__state--error">
+      {{ errorMessage }}
+      <button type="button" (click)="loadMovimientos()">Reintentar</button>
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && movimientos.length === 0" class="admin-card__state">
+      No se encontraron movimientos.
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && movimientos.length > 0" class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Insumo</th>
+            <th>Tipo</th>
+            <th>Cantidad</th>
+            <th>Motivo</th>
+            <th>Usuario</th>
+            <th>Fecha</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let movimiento of movimientos">
+            <td data-label="ID">{{ movimiento.id_movimiento }}</td>
+            <td data-label="Insumo">
+              <strong>{{ movimiento.nombre_insumo ?? movimiento.id_insumo }}</strong>
+            </td>
+            <td data-label="Tipo">
+              <span class="status-badge" [ngClass]="getTipoBadgeClass(movimiento.tipo_movimiento)">
+                {{ movimiento.tipo_movimiento }}
+              </span>
+            </td>
+            <td data-label="Cantidad">{{ movimiento.cantidad }}</td>
+            <td data-label="Motivo">{{ movimiento.motivo }}</td>
+            <td data-label="Usuario">{{ movimiento.nombre_usuario ?? '—' }}</td>
+            <td data-label="Fecha">{{ formatDate(movimiento.fecha_creacion) }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-paginator
+      *ngIf="!loading && !errorMessage && totalItems > 0"
+      [page]="page"
+      [pageSize]="pageSize"
+      [totalItems]="totalItems"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-paginator>
+  </article>
+</section>

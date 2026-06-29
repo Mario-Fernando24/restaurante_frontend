@@ -1,0 +1,92 @@
+<section class="admin-page">
+  <header class="admin-page__header">
+    <div>
+      <h1>Turnos</h1>
+      <p>Historial de aperturas y cierres de caja.</p>
+    </div>
+  </header>
+
+  <article class="admin-card">
+    <div class="admin-card__toolbar">
+      <div class="admin-card__search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          type="search"
+          [formControl]="searchControl"
+          placeholder="Buscar por usuario o estado..."
+          aria-label="Buscar turnos"
+        />
+      </div>
+      <span class="admin-card__count" *ngIf="!loading">
+        {{ totalItems }} resultado{{ totalItems === 1 ? '' : 's' }}
+      </span>
+    </div>
+
+    <div *ngIf="loading" class="admin-card__state">Cargando turnos...</div>
+
+    <div *ngIf="!loading && errorMessage" class="admin-card__state admin-card__state--error">
+      {{ errorMessage }}
+      <button type="button" (click)="loadTurnos()">Reintentar</button>
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && turnos.length === 0" class="admin-card__state">
+      No se encontraron turnos.
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && turnos.length > 0" class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Usuario</th>
+            <th>Monto apertura</th>
+            <th>Monto cierre</th>
+            <th>Estado</th>
+            <th>Apertura</th>
+            <th>Cierre</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let turno of turnos">
+            <td data-label="ID">{{ turno.id_arqueo }}</td>
+            <td data-label="Usuario">{{ turno.cajero ?? '—' }}</td>
+            <td data-label="Monto apertura">{{ formatCurrency(turno.monto_apertura) }}</td>
+            <td data-label="Monto cierre">{{ formatCurrency(turno.monto_cierre) }}</td>
+            <td data-label="Estado">
+              <span
+                class="status-badge"
+                [class.status-badge--active]="isAbierto(turno.estado)"
+                [class.status-badge--inactive]="!isAbierto(turno.estado)"
+              >
+                {{ turno.estado }}
+              </span>
+            </td>
+            <td data-label="Apertura">{{ formatDate(turno.fecha_apertura) }}</td>
+            <td data-label="Cierre" *ngIf="turno.fecha_cierre">{{ formatDate(turno.fecha_cierre) }}</td>
+
+            <td *ngIf="!turno.fecha_cierre" data-label="Estado">
+              <span
+                class="status-badge"
+                [class.status-badge--active]="isAbierto(turno.estado)"
+                [class.status-badge--inactive]="!isAbierto(turno.estado)">
+                En curso
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-paginator
+      *ngIf="!loading && !errorMessage && totalItems > 0"
+      [page]="page"
+      [pageSize]="pageSize"
+      [totalItems]="totalItems"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-paginator>
+  </article>
+</section>

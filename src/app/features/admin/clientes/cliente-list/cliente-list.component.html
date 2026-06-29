@@ -1,0 +1,254 @@
+<section class="admin-page">
+  <header class="admin-page__header">
+    <div>
+      <h1>Clientes</h1>
+      <p>Gestiona los clientes registrados en el sistema.</p>
+    </div>
+    <button type="button" class="admin-page__add" (click)="openCreateModal()">
+      + Nuevo cliente
+    </button>
+  </header>
+
+  <article class="admin-card">
+    <div class="admin-card__toolbar">
+      <div class="admin-card__search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          type="search"
+          [formControl]="searchControl"
+          placeholder="Buscar por nombre, documento, correo o estado..."
+          aria-label="Buscar clientes"
+        />
+      </div>
+      <span class="admin-card__count" *ngIf="!loading">
+        {{ totalItems }} resultado{{ totalItems === 1 ? '' : 's' }}
+      </span>
+    </div>
+
+    <div *ngIf="loading" class="admin-card__state">Cargando clientes...</div>
+
+    <div *ngIf="!loading && errorMessage" class="admin-card__state admin-card__state--error">
+      {{ errorMessage }}
+      <button type="button" (click)="loadClientes()">Reintentar</button>
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && clientes.length === 0" class="admin-card__state">
+      No se encontraron clientes.
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && clientes.length > 0" class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Documento</th>
+            <th>Correo</th>
+            <th>Teléfono</th>
+            <th>Ciudad</th>
+            <th>Estado</th>
+            <th>Creación</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let cliente of clientes">
+            <td data-label="ID">{{ cliente.id_cliente }}</td>
+            <td data-label="Cliente">
+              <strong>{{ getFullName(cliente) }}</strong>
+              <div>{{ cliente.tipo_usuario }}</div>
+            </td>
+            <td data-label="Documento">{{ cliente.tipo_documento }} {{ cliente.numero_documento }}</td>
+            <td data-label="Correo">{{ cliente.correo }}</td>
+            <td data-label="Teléfono">{{ cliente.telefono }}</td>
+            <td data-label="Ciudad">{{ cliente.ciudad }}</td>
+            <td data-label="Estado">
+              <span
+                class="status-badge"
+                [class.status-badge--active]="isActivo(cliente.estado)"
+                [class.status-badge--inactive]="!isActivo(cliente.estado)"
+              >
+                {{ cliente.estado }}
+              </span>
+            </td>
+            <td data-label="Creación">{{ formatDate(cliente.fecha_creacion) }}</td>
+            <td data-label="Acciones">
+              <div class="admin-table__actions">
+                <button
+                  type="button"
+                  class="action-btn action-btn--edit"
+                  (click)="openEditModal(cliente)"
+                >
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  class="action-btn"
+                  [class.action-btn--danger]="isActivo(cliente.estado)"
+                  [class.action-btn--success]="!isActivo(cliente.estado)"
+                  [disabled]="isUpdating(cliente.id_cliente)"
+                  (click)="toggleEstado(cliente)"
+                >
+                  {{ isUpdating(cliente.id_cliente) ? 'Guardando...' : getToggleLabel(cliente.estado) }}
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-paginator
+      *ngIf="!loading && !errorMessage && totalItems > 0"
+      [page]="page"
+      [pageSize]="pageSize"
+      [totalItems]="totalItems"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-paginator>
+  </article>
+</section>
+
+<div
+  *ngIf="showModal"
+  class="modal-overlay"
+  (click)="closeModal()"
+  aria-modal="true"
+  role="dialog"
+>
+  <div class="modal" (click)="$event.stopPropagation()">
+    <header class="modal__header">
+      <div>
+        <h2>{{ modalTitle }}</h2>
+        <p>{{ modalDescription }}</p>
+      </div>
+      <button
+        type="button"
+        class="modal__close"
+        aria-label="Cerrar"
+        [disabled]="saving"
+        (click)="closeModal()"
+      >
+        ×
+      </button>
+    </header>
+
+    <form class="modal__form" [formGroup]="clienteForm" (ngSubmit)="submitForm()">
+      <div *ngIf="formError" class="modal__error">{{ formError }}</div>
+      <div *ngIf="tiposDocumentoError" class="modal__error">{{ tiposDocumentoError }}</div>
+
+      <div class="form-grid">
+        <div class="form-field" [class.form-field--error]="tipoUsuarioError">
+          <label class="form-field__label" for="cliente-tipo-usuario">Tipo de usuario</label>
+          <select id="cliente-tipo-usuario" class="form-field__select" formControlName="tipo_usuario">
+            <option value="" disabled>Selecciona un tipo</option>
+            <option *ngFor="let tipo of tiposUsuario" [value]="tipo">{{ tipo }}</option>
+          </select>
+          <span *ngIf="tipoUsuarioError" class="form-field__error">{{ tipoUsuarioError }}</span>
+        </div>
+
+        <div class="form-field" [class.form-field--error]="tipoDocumentoError">
+          <label class="form-field__label" for="cliente-tipo-documento">Tipo de documento</label>
+          <select
+            id="cliente-tipo-documento"
+            class="form-field__select"
+            formControlName="tipo_documento"
+            [disabled]="loadingTiposDocumento || tiposDocumento.length === 0"
+          >
+            <option [ngValue]="null" disabled>Selecciona un tipo</option>
+            <option *ngFor="let tipo of tiposDocumento" [ngValue]="tipo.codigo">
+              {{ tipo.nombre }}
+            </option>
+          </select>
+          <span *ngIf="tipoDocumentoError" class="form-field__error">{{ tipoDocumentoError }}</span>
+          <span *ngIf="loadingTiposDocumento" class="form-field__hint">Cargando tipos...</span>
+        </div>
+      </div>
+
+      <app-input
+        label="Número de documento"
+        placeholder="Ej: 1234567890"
+        formControlName="numero_documento"
+        [error]="numeroDocumentoError"
+      ></app-input>
+
+      <div class="form-grid">
+        <app-input
+          label="Nombre"
+          placeholder="Ej: Juan"
+          formControlName="nombre"
+          [error]="nombreError"
+        ></app-input>
+
+        <app-input
+          label="Apellido"
+          placeholder="Ej: Pérez"
+          formControlName="apellido"
+          [error]="apellidoError"
+        ></app-input>
+      </div>
+
+      <app-input
+        label="Correo electrónico"
+        type="email"
+        placeholder="Ej: juan@correo.com"
+        formControlName="correo"
+        [error]="correoError"
+      ></app-input>
+
+      <app-input
+        label="Teléfono"
+        type="tel"
+        placeholder="Ej: 3001234567"
+        formControlName="telefono"
+        [error]="telefonoError"
+      ></app-input>
+
+      <app-input
+        label="Dirección"
+        placeholder="Ej: Calle 10 # 20-30"
+        formControlName="direccion"
+        [error]="direccionError"
+      ></app-input>
+
+      <div class="form-grid">
+        <app-input
+          label="Ciudad"
+          placeholder="Ej: Medellín"
+          formControlName="ciudad"
+          [error]="ciudadError"
+        ></app-input>
+
+        <app-input
+          label="Departamento"
+          placeholder="Ej: Antioquia"
+          formControlName="departamento"
+          [error]="departamentoError"
+        ></app-input>
+      </div>
+
+      <app-input
+        label="País"
+        placeholder="Ej: Colombia"
+        formControlName="pais"
+        [error]="paisError"
+      ></app-input>
+
+      <div class="modal__actions">
+        <app-button type="button" variant="secondary" [disabled]="saving" (clicked)="closeModal()">
+          Cancelar
+        </app-button>
+        <app-button
+          type="submit"
+          [loading]="saving"
+          [disabled]="loadingTiposDocumento || tiposDocumento.length === 0"
+        >
+          {{ submitLabel }}
+        </app-button>
+      </div>
+    </form>
+  </div>
+</div>

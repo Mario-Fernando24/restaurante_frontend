@@ -1,0 +1,229 @@
+<section class="admin-page">
+  <header class="admin-page__header">
+    <div>
+      <h1>Productos</h1>
+      <p>Gestiona los productos del menú del restaurante.</p>
+    </div>
+    <button type="button" class="admin-page__add" (click)="openCreateModal()">
+      + Nuevo producto
+    </button>
+  </header>
+
+  <article class="admin-card">
+    <div class="admin-card__toolbar">
+      <div class="admin-card__search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          type="search"
+          [formControl]="searchControl"
+          placeholder="Buscar por nombre, categoría, tipo o estado..."
+          aria-label="Buscar productos"
+        />
+      </div>
+      <span class="admin-card__count" *ngIf="!loading">
+        {{ totalItems }} resultado{{ totalItems === 1 ? '' : 's' }}
+      </span>
+    </div>
+
+    <div *ngIf="loading" class="admin-card__state">Cargando productos...</div>
+
+    <div *ngIf="!loading && errorMessage" class="admin-card__state admin-card__state--error">
+      {{ errorMessage }}
+      <button type="button" (click)="loadProductos()">Reintentar</button>
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && productos.length === 0" class="admin-card__state">
+      No se encontraron productos.
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && productos.length > 0" class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Imagen</th>
+            <th>Nombre</th>
+            <th>Categoría</th>
+            <th>Tipo</th>
+            <th>Precio</th>
+            <th>Estado</th>
+            <th>Creación</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let producto of productos">
+            <td data-label="ID">{{ producto.id_producto }}</td>
+            <td data-label="Imagen">
+              <img
+                *ngIf="getImagenUrl(producto.imagen) as imgUrl"
+                [src]="imgUrl"
+                [alt]="producto.nombre"
+                class="thumb"
+              />
+              <span *ngIf="!getImagenUrl(producto.imagen)">—</span>
+            </td>
+            <td data-label="Nombre">
+              <strong>{{ producto.nombre }}</strong>
+            </td>
+            <td data-label="Categoría">{{ producto.categoria_nombre ?? '—' }}</td>
+            <td data-label="Tipo">{{ producto.tipo_producto }}</td>
+            <td data-label="Precio">{{ formatCurrency(producto.precio_venta) }}</td>
+            <td data-label="Estado">
+              <span
+                class="status-badge"
+                [class.status-badge--active]="isActivo(producto.estado)"
+                [class.status-badge--inactive]="!isActivo(producto.estado)"
+              >
+                {{ producto.estado }}
+              </span>
+            </td>
+            <td data-label="Creación">{{ formatDate(producto.fecha_creacion) }}</td>
+            <td data-label="Acciones">
+              <div class="admin-table__actions">
+                <button
+                  type="button"
+                  class="action-btn action-btn--edit"
+                  (click)="openEditModal(producto)"
+                >
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  class="action-btn"
+                  [class.action-btn--danger]="isActivo(producto.estado)"
+                  [class.action-btn--success]="!isActivo(producto.estado)"
+                  [disabled]="isUpdating(producto.id_producto)"
+                  (click)="toggleEstado(producto)"
+                >
+                  {{ isUpdating(producto.id_producto) ? 'Guardando...' : getToggleLabel(producto.estado) }}
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-paginator
+      *ngIf="!loading && !errorMessage && totalItems > 0"
+      [page]="page"
+      [pageSize]="pageSize"
+      [totalItems]="totalItems"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-paginator>
+  </article>
+</section>
+
+<div
+  *ngIf="showModal"
+  class="modal-overlay"
+  (click)="closeModal()"
+  aria-modal="true"
+  role="dialog"
+>
+  <div class="modal" (click)="$event.stopPropagation()">
+    <header class="modal__header">
+      <div>
+        <h2>{{ modalTitle }}</h2>
+        <p>{{ modalDescription }}</p>
+      </div>
+      <button
+        type="button"
+        class="modal__close"
+        aria-label="Cerrar"
+        [disabled]="saving"
+        (click)="closeModal()"
+      >
+        ×
+      </button>
+    </header>
+
+    <form class="modal__form" [formGroup]="productoForm" (ngSubmit)="submitForm()">
+      <div *ngIf="formError" class="modal__error">{{ formError }}</div>
+      <div *ngIf="categoriasError" class="modal__error">{{ categoriasError }}</div>
+
+      <div class="form-field" [class.form-field--error]="idCategoriaError">
+        <label class="form-field__label" for="producto-categoria">Categoría</label>
+        <select
+          id="producto-categoria"
+          class="form-field__select"
+          formControlName="id_categoria"
+          [disabled]="loadingCategorias || categorias.length === 0"
+        >
+          <option [ngValue]="null" disabled>Selecciona una categoría</option>
+          <option *ngFor="let categoria of categorias" [ngValue]="categoria.id_categoria">
+            {{ categoria.nombre }}
+          </option>
+        </select>
+        <span *ngIf="idCategoriaError" class="form-field__error">{{ idCategoriaError }}</span>
+        <span *ngIf="loadingCategorias" class="form-field__hint">Cargando categorías...</span>
+      </div>
+
+      <app-input
+        label="Nombre"
+        placeholder="Ej: Hamburguesa clásica"
+        formControlName="nombre"
+        [error]="nombreError"
+      ></app-input>
+
+      <app-input
+        label="Descripción"
+        placeholder="Ej: Carne 150g, queso y vegetales"
+        formControlName="descripcion"
+        [error]="descripcionError"
+      ></app-input>
+
+      <div class="form-grid">
+        <app-input
+          label="Precio de venta"
+          type="number"
+          placeholder="0"
+          formControlName="precio_venta"
+          [error]="precioVentaError"
+        ></app-input>
+
+        <div class="form-field" [class.form-field--error]="tipoProductoError">
+          <label class="form-field__label" for="producto-tipo">Tipo de producto</label>
+          <select id="producto-tipo" class="form-field__select" formControlName="tipo_producto">
+            <option value="" disabled>Selecciona un tipo</option>
+            <option *ngFor="let tipo of tiposProducto" [value]="tipo">{{ tipo }}</option>
+          </select>
+          <span *ngIf="tipoProductoError" class="form-field__error">{{ tipoProductoError }}</span>
+        </div>
+      </div>
+
+      <div class="form-field">
+        <label class="form-field__label" for="producto-imagen">Imagen</label>
+        <input
+          id="producto-imagen"
+          type="file"
+          class="form-field__file"
+          accept="image/*"
+          (change)="onImageSelected($event)"
+        />
+        <span class="form-field__hint">
+          {{ modalMode === 'edit' ? 'Opcional. Déjala vacía para mantener la actual.' : 'Opcional.' }}
+        </span>
+        <img *ngIf="imagePreview" [src]="imagePreview" alt="Vista previa" class="thumb" />
+      </div>
+
+      <div class="modal__actions">
+        <app-button type="button" variant="secondary" [disabled]="saving" (clicked)="closeModal()">
+          Cancelar
+        </app-button>
+        <app-button
+          type="submit"
+          [loading]="saving"
+          [disabled]="loadingCategorias || categorias.length === 0"
+        >
+          {{ submitLabel }}
+        </app-button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,115 @@
+.turno-page {
+  max-width: 640px;
+
+  &__header {
+    margin-bottom: 24px;
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--color-text);
+    }
+
+    p {
+      margin: 0;
+      color: var(--color-text-secondary);
+      font-size: 14px;
+    }
+  }
+
+  &__state {
+    padding: 20px;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+
+    &--error {
+      color: var(--color-error);
+      background: var(--color-error-soft);
+      border-color: rgba(225, 29, 72, 0.2);
+    }
+  }
+}
+
+.turno-card,
+.turno-summary {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-card);
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: 18px;
+    font-weight: 700;
+  }
+
+  > p {
+    margin: 0 0 20px;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+  }
+}
+
+.turno-summary {
+  border-color: rgba(5, 150, 105, 0.25);
+  background: linear-gradient(180deg, var(--color-success-soft) 0%, var(--color-surface) 120px);
+
+  &__badge {
+    display: inline-block;
+    margin-bottom: 12px;
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    background: var(--color-success-soft);
+    color: var(--color-success);
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin: 0;
+
+    dt {
+      margin: 0 0 4px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--color-text-muted);
+    }
+
+    dd {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--color-text);
+    }
+  }
+
+  &__estado {
+    text-transform: capitalize;
+    color: var(--color-success);
+  }
+}
+
+.turno-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (max-width: 480px) {
+  .turno-summary__grid {
+    grid-template-columns: 1fr;
+  }
+}

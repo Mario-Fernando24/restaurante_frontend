@@ -1,0 +1,162 @@
+@import '../../../../shared/styles/admin-crud.scss';
+
+.receta-list {
+  display: grid;
+  gap: 1rem;
+  padding: 0 0 0.5rem;
+}
+
+.receta-card {
+  border: 1px solid var(--border-color, #e8e0d8);
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.receta-card__header {
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid var(--border-color, #f0ebe4);
+  background: #faf8f6;
+}
+
+.receta-card__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #2c2419;
+}
+
+.receta-card__subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  color: #7a6f63;
+}
+
+.receta-card__ingredientes {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0;
+}
+
+.receta-card__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 1.25rem;
+  border-bottom: 1px solid #f5f1ec;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.receta-card__info {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.receta-card__insumo-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.receta-card__insumo {
+  font-weight: 500;
+  color: #3d3429;
+}
+
+.receta-card__detalle {
+  font-size: 0.78rem;
+  color: #8a7d6f;
+}
+
+.receta-card__valores {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.receta-card__cantidad {
+  font-size: 0.9rem;
+  color: #8b6914;
+  background: #fbf4e8;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.receta-card__costo {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #5c4a32;
+  white-space: nowrap;
+}
+
+.receta-card__resumen {
+  padding: 0.85rem 1.25rem 1rem;
+  background: #faf8f6;
+  border-top: 1px solid #f0ebe4;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.receta-card__resumen-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.875rem;
+  color: #6b5a45;
+
+  strong {
+    color: #2c2419;
+  }
+
+  &--ganancia strong {
+    color: #2d6a4f;
+  }
+
+  &--perdida strong {
+    color: #b42318;
+  }
+}
+
+.receta-form__preview {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  background: #fbf4e8;
+  color: #5c4a32;
+  font-size: 0.875rem;
+
+  strong {
+    color: #2c2419;
+  }
+}
+
+.receta-card__edit {
+  flex-shrink: 0;
+  border: 1px solid #d4c4b0;
+  background: #fff;
+  color: #6b5a45;
+  border-radius: 8px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+
+  &:hover {
+    background: #faf8f6;
+    border-color: #8b6914;
+    color: #5c4a32;
+  }
+}

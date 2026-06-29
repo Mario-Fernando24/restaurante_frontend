@@ -43,6 +43,12 @@
             <h1>Hola, {{ userName }}</h1>
             <span class="topbar__role">{{ userRole }}</span>
           </div>
+          <span
+            class="topbar__shift-badge"
+            [class.topbar__shift-badge--open]="turnoActivo"
+          >
+            {{ turnoActivo ? 'Turno abierto' : 'Sin turno' }}
+          </span>
         </ng-template>
       </div>
 

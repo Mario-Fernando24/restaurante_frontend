@@ -1,0 +1,87 @@
+<section class="admin-page">
+  <header class="admin-page__header">
+    <div>
+      <h1>Auditoría</h1>
+      <p>Registro de acciones realizadas en el sistema.</p>
+    </div>
+  </header>
+
+  <article class="admin-card">
+    <div class="admin-card__toolbar">
+      <div class="admin-card__filters">
+        <div class="admin-card__search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input
+            type="search"
+            [formControl]="searchControl"
+            placeholder="Buscar por acción, tabla o usuario..."
+            aria-label="Buscar auditoría"
+          />
+        </div>
+        <div class="admin-card__search">
+          <input
+            type="text"
+            [formControl]="moduloControl"
+            placeholder="Filtrar por módulo..."
+            aria-label="Filtrar por módulo"
+          />
+        </div>
+      </div>
+      <span class="admin-card__count" *ngIf="!loading">
+        {{ totalItems }} resultado{{ totalItems === 1 ? '' : 's' }}
+      </span>
+    </div>
+
+    <div *ngIf="loading" class="admin-card__state">Cargando auditoría...</div>
+
+    <div *ngIf="!loading && errorMessage" class="admin-card__state admin-card__state--error">
+      {{ errorMessage }}
+      <button type="button" (click)="loadAuditoria()">Reintentar</button>
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && registros.length === 0" class="admin-card__state">
+      No se encontraron registros.
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && registros.length > 0" class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Fecha</th>
+            <th>Usuario</th>
+            <th>Módulo</th>
+            <th>Acción</th>
+            <th>Tabla</th>
+            <th>Registro</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let registro of registros">
+            <td data-label="ID">{{ registro.id_auditoria }}</td>
+            <td data-label="Fecha">{{ formatDate(registro.fecha) }}</td>
+            <td data-label="Usuario">{{ registro.nombre_usuario ?? '—' }}</td>
+            <td data-label="Módulo">
+              <span class="status-badge status-badge--info">{{ registro.modulo }}</span>
+            </td>
+            <td data-label="Acción">{{ registro.accion }}</td>
+            <td data-label="Tabla">{{ registro.tabla_afectada }}</td>
+            <td data-label="Registro">{{ registro.id_registro }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-paginator
+      *ngIf="!loading && !errorMessage && totalItems > 0"
+      [page]="page"
+      [pageSize]="pageSize"
+      [totalItems]="totalItems"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-paginator>
+  </article>
+</section>

@@ -1,0 +1,59 @@
+@import '../../../../shared/styles/admin-crud.scss';
+
+.table-action {
+  border: 1px solid #d4c4b0;
+  background: #fff;
+  color: #6b5a45;
+  border-radius: 8px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8125rem;
+  cursor: pointer;
+
+  &:hover {
+    background: #faf8f6;
+    border-color: #8b6914;
+  }
+}
+
+.insumo-costo-box {
+  padding: 0.9rem 1rem;
+  border: 1px solid #ebe3da;
+  border-radius: 10px;
+  background: #faf8f6;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.insumo-costo-box__title {
+  margin: 0;
+  font-size: 0.95rem;
+  color: #2c2419;
+}
+
+.insumo-costo-box__hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: #7a6f63;
+}
+
+.insumo-costo-box__actual {
+  font-size: 0.8125rem;
+  color: #8b6914;
+  background: #fbf4e8;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+}
+
+.insumo-costo-box__preview {
+  margin: 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: 8px;
+  background: #eef6f0;
+  color: #2d6a4f;
+  font-size: 0.875rem;
+
+  strong {
+    color: #1b4332;
+  }
+}

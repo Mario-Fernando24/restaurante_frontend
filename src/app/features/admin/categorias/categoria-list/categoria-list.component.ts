@@ -12,6 +12,7 @@ import { ButtonComponent } from '../../../../shared/components/button/button.com
 import { InputComponent } from '../../../../shared/components/input/input.component';
 import { PaginatorComponent } from '../../../../shared/components/paginator/paginator.component';
 import { ConfirmDialogService } from '../../../../shared/components/confirm-dialog/confirm-dialog.service';
+import { NotificationService } from '../../../../core/services/notification.service';
 import { Categoria, CategoriaEstado } from '../models/categoria.model';
 import { CategoriaService } from '../services/categoria.service';
 
@@ -40,7 +41,6 @@ export class CategoriaListComponent implements OnInit, OnDestroy {
   categorias: Categoria[] = [];
   loading = false;
   errorMessage = '';
-  actionError = '';
   updatingId: number | null = null;
 
   showCreateModal = false;
@@ -56,7 +56,8 @@ export class CategoriaListComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private categoriaService: CategoriaService,
-    private confirmDialog: ConfirmDialogService
+    private confirmDialog: ConfirmDialogService,
+    private notification: NotificationService
   ) {}
 
   ngOnInit(): void {
@@ -123,10 +124,13 @@ export class CategoriaListComponent implements OnInit, OnDestroy {
         this.createForm.reset();
         this.page = 1;
         this.loadCategorias();
+        this.notification.success('Categoría creada correctamente');
       },
       error: (err) => {
         this.creating = false;
-        this.createError = err?.message ?? 'Error al crear la categoría';
+        const message = err?.message ?? 'Error al crear la categoría';
+        this.createError = message;
+        this.notification.error(message);
       },
     });
   }
@@ -207,7 +211,6 @@ export class CategoriaListComponent implements OnInit, OnDestroy {
 
   private ejecutarCambioEstado(categoria: Categoria, nuevoEstado: CategoriaEstado): void {
     this.updatingId = categoria.id_categoria;
-    this.actionError = '';
 
     this.categoriaService.cambiarEstado(categoria.id_categoria, nuevoEstado).subscribe({
       next: (updated) => {
@@ -220,10 +223,15 @@ export class CategoriaListComponent implements OnInit, OnDestroy {
         }
 
         this.updatingId = null;
+        this.notification.success(
+          nuevoEstado === 'Activo'
+            ? `Categoría "${categoria.nombre}" activada`
+            : `Categoría "${categoria.nombre}" desactivada`
+        );
       },
       error: (err) => {
         this.updatingId = null;
-        this.actionError = err?.message ?? 'Error al cambiar el estado';
+        this.notification.error(err?.message ?? 'Error al cambiar el estado');
       },
     });
   }
