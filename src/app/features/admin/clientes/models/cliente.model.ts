@@ -1,3 +1,5 @@
+export type TipoUsuario = 'CLIENTE' | 'PROVEEDOR';
+
 export interface TipoDocumento {
   codigo: number;
   nombre: string;
@@ -5,7 +7,7 @@ export interface TipoDocumento {
 
 export interface Cliente {
   id_cliente: number;
-  tipo_usuario: string;
+  tipo_usuario: TipoUsuario;
   tipo_documento: number | string;
   numero_documento: string;
   nombre: string;
@@ -24,7 +26,7 @@ export interface Cliente {
 export type ClienteEstado = 'Activo' | 'Inactivo';
 
 export interface CrearClienteRequest {
-  tipo_usuario: string;
+  tipo_usuario: TipoUsuario;
   tipo_documento: number;
   numero_documento: string;
   nombre: string;
@@ -38,6 +40,7 @@ export interface CrearClienteRequest {
 }
 
 export interface ActualizarClienteRequest {
+  tipo_usuario?: TipoUsuario;
   nombre?: string;
   apellido?: string;
   telefono?: string;
@@ -68,6 +71,7 @@ export interface ClienteMutationResponse {
 
 export interface ClienteQueryParams {
   search?: string;
+  tipoUsuario?: TipoUsuario | '';
   page?: number;
   pageSize?: number;
 }
@@ -79,7 +83,12 @@ export interface PaginatedResult<T> {
   pageSize: number;
 }
 
-export const TIPOS_USUARIO = ['Natural', 'Juridico'] as const;
+export const TIPOS_USUARIO = ['CLIENTE', 'PROVEEDOR'] as const;
+
+export const TIPO_USUARIO_LABELS: Record<TipoUsuario, string> = {
+  CLIENTE: 'Cliente',
+  PROVEEDOR: 'Proveedor',
+};
 
 /** Códigos DIAN según Postman: 301=Cédula · 302=T.I. · 303=NIT · 304=Pasaporte */
 export const TIPOS_DOCUMENTO_FALLBACK: TipoDocumento[] = [

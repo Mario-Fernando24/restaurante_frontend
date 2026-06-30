@@ -19,7 +19,40 @@ export interface VentaPagoPayload {
 export interface CrearVentaRequest {
   id_cliente?: number;
   detalle: VentaDetallePayload[];
-  pagos: VentaPagoPayload[];
+  pagos?: VentaPagoPayload[];
+  es_cortesia?: boolean;
+  observacion_cortesia?: string;
+}
+
+export interface VentaDetalleLinea {
+  id_producto: number;
+  producto: string;
+  cantidad: string | number;
+  precio_unitario: string | number;
+  subtotal: string | number;
+}
+
+export interface VentaPago {
+  id_pago?: number;
+  metodo_pago: string;
+  monto: string | number;
+  referencia?: string | null;
+  fecha_pago?: string;
+}
+
+export interface VentaDetalle {
+  id_venta: number;
+  id_arqueo?: number;
+  total: string | number;
+  tipo_venta?: string;
+  es_cortesia?: boolean;
+  observacion_cortesia?: string | null;
+  estado?: string;
+  fecha_creacion?: string;
+  vendedor?: string;
+  cliente?: string | null;
+  detalle?: VentaDetalleLinea[];
+  pagos?: VentaPago[];
 }
 
 export interface Venta {
@@ -27,6 +60,8 @@ export interface Venta {
   total: number;
   estado?: string;
   fecha_creacion?: string;
+  tipo_venta?: string;
+  es_cortesia?: boolean;
 }
 
 export interface MetodoPagoApiResponse {
@@ -36,8 +71,8 @@ export interface MetodoPagoApiResponse {
 
 export interface VentaMutationResponse {
   status?: boolean;
-  body?: Venta;
-  venta?: Venta;
+  body?: VentaDetalle;
+  venta?: VentaDetalle;
   mensaje?: string;
   message?: string;
 }

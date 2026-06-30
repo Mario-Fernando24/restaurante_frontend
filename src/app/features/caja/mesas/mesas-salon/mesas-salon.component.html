@@ -1,0 +1,53 @@
+<section class="salon-page">
+  <header class="salon-page__header">
+    <div>
+      <h1>Mesas</h1>
+      <p>
+        Toma pedidos por mesa. Los clientes pueden seguir pidiendo; cobras cuando terminen.
+        Las ventas directas siguen en
+        <a [routerLink]="routes.CAJERO_POS">Punto de venta</a>.
+      </p>
+    </div>
+    <div class="salon-page__stats">
+      <span class="salon-page__stat salon-page__stat--free">{{ mesasLibres }} libres</span>
+      <span class="salon-page__stat salon-page__stat--busy">{{ mesasOcupadas }} con pedido</span>
+    </div>
+  </header>
+
+  <div *ngIf="loading" class="salon-page__state">Cargando mesas...</div>
+  <div *ngIf="!loading && errorMessage" class="salon-page__state salon-page__state--error">
+    {{ errorMessage }}
+  </div>
+
+  <div *ngIf="!loading && !errorMessage && mesas.length === 0" class="salon-page__state">
+    No hay mesas activas. El administrador debe crearlas primero.
+  </div>
+
+  <section *ngFor="let grupo of zonas" class="salon-zona">
+    <h2>{{ grupo.zona }}</h2>
+    <div class="salon-grid">
+      <button
+        *ngFor="let mesa of grupo.mesas"
+        type="button"
+        class="salon-mesa"
+        [class.salon-mesa--ocupada]="mesa.ocupada"
+        (click)="abrirMesa(mesa)"
+      >
+        <span class="salon-mesa__num">{{ mesa.numero }}</span>
+        <span class="salon-mesa__cap">{{ mesa.capacidad }} pax</span>
+
+        <ng-container *ngIf="mesa.ocupada && mesa.comanda; else libreTpl">
+          <strong class="salon-mesa__total">{{ formatCurrency(mesa.comanda.total) }}</strong>
+          <span class="salon-mesa__meta">
+            {{ mesa.comanda.items_count }} ítem{{ mesa.comanda.items_count === 1 ? '' : 's' }}
+            · desde {{ formatTime(mesa.comanda.fecha_apertura) }}
+          </span>
+        </ng-container>
+
+        <ng-template #libreTpl>
+          <span class="salon-mesa__libre">Libre · tocar para abrir</span>
+        </ng-template>
+      </button>
+    </div>
+  </section>
+</section>

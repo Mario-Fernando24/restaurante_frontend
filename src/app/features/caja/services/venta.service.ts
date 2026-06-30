@@ -7,7 +7,7 @@ import { parseApiError } from '../../../core/services/http-error.util';
 import {
   CrearVentaRequest,
   MetodoPago,
-  Venta,
+  VentaDetalle,
   VentaMutationResponse,
 } from '../models/venta.model';
 
@@ -31,14 +31,20 @@ export class VentaService {
     );
   }
 
-  crearVenta(payload: CrearVentaRequest): Observable<Venta> {
+  crearVenta(payload: CrearVentaRequest): Observable<VentaDetalle> {
     const body: Record<string, unknown> = {
       detalle: payload.detalle,
-      pagos: payload.pagos,
     };
 
     if (payload.id_cliente != null) {
       body['id_cliente'] = payload.id_cliente;
+    }
+
+    if (payload.es_cortesia) {
+      body['es_cortesia'] = true;
+      body['observacion_cortesia'] = payload.observacion_cortesia ?? '';
+    } else if (payload.pagos) {
+      body['pagos'] = payload.pagos;
     }
 
     return this.api.post<VentaMutationResponse>(`${VENTAS_ENDPOINT}/crear`, body).pipe(
@@ -49,9 +55,23 @@ export class VentaService {
     );
   }
 
-  private extractVenta(response: VentaMutationResponse | Venta, fallback: string): Venta {
-    if ('id_venta' in response) return response;
-    return extractApiEntity<Venta>(response, ['body', 'venta'], fallback);
+  obtenerVenta(idVenta: number): Observable<VentaDetalle> {
+    return this.api.get<unknown>(`${VENTAS_ENDPOINT}/${idVenta}`).pipe(
+      map((response) =>
+        extractApiEntity<VentaDetalle>(response, ['body'], 'No se encontró la venta')
+      ),
+      catchError((error) =>
+        throwError(() => new Error(parseApiError(error, 'Error al cargar la venta')))
+      )
+    );
+  }
+
+  private extractVenta(response: VentaMutationResponse | VentaDetalle, fallback: string): VentaDetalle {
+    if ('id_venta' in response && 'detalle' in response) return response as VentaDetalle;
+    if ('id_venta' in response) {
+      return response as VentaDetalle;
+    }
+    return extractApiEntity<VentaDetalle>(response, ['body', 'venta'], fallback);
   }
 
   private normalizeMetodo(raw: Record<string, unknown>): MetodoPago {

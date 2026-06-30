@@ -1,0 +1,140 @@
+@import '../../../../shared/styles/admin-crud.scss';
+
+.stock-report {
+  &__actions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  &__print {
+    background: #2c2419;
+    border: none;
+    cursor: pointer;
+  }
+
+  &__refresh {
+    border: 1px solid var(--color-border, #e8e0d8);
+    background: #fff;
+    border-radius: 10px;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+  }
+}
+
+.stock-print-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid #e8e0d8;
+  border-radius: 12px;
+  background: #faf8f6;
+
+  h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1.2rem;
+  }
+
+  p {
+    margin: 0;
+    color: #7a6f63;
+    font-size: 0.9rem;
+  }
+
+  &__meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+    color: #6b5a47;
+    font-weight: 600;
+  }
+}
+
+.stock-grupo {
+  margin-bottom: 1.25rem;
+  border: 1px solid #e8e0d8;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 1.1rem;
+    background: #f5f1ec;
+    border-bottom: 1px solid #ebe4dc;
+
+    h3 {
+      margin: 0;
+      font-size: 1rem;
+      color: #3d3429;
+    }
+
+    span {
+      font-size: 0.8rem;
+      color: #9a8d7d;
+    }
+  }
+}
+
+.stock-table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid #f2ede7;
+    text-align: left;
+    font-size: 0.9rem;
+  }
+
+  th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #9a8d7d;
+    background: #fcfaf8;
+  }
+
+  &__row--bajo {
+    background: #fff8f1;
+  }
+}
+
+@media print {
+  :host {
+    display: block;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  .stock-report {
+    max-width: none;
+    padding: 0;
+  }
+
+  .stock-print-area {
+    display: block !important;
+  }
+
+  .stock-grupo {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .status-badge {
+    border: 1px solid #ccc;
+    color: #000 !important;
+    background: #fff !important;
+  }
+}

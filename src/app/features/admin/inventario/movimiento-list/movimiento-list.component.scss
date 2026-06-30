@@ -1,1 +1,102 @@
 @import '../../../../shared/styles/admin-crud.scss';
+
+.movimiento-list {
+  display: grid;
+  gap: 1rem;
+  padding: 0 0 0.5rem;
+}
+
+.movimiento-card {
+  border: 1px solid var(--border-color, #e8e0d8);
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.movimiento-card__header {
+  padding: 1rem 1.25rem 0.75rem;
+  border-bottom: 1px solid #f0ebe4;
+  background: #faf8f6;
+}
+
+.movimiento-card__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.movimiento-card__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #2c2419;
+}
+
+.movimiento-card__subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.875rem;
+  color: #7a6f63;
+}
+
+.movimiento-card__meta {
+  margin-top: 0.45rem;
+  font-size: 0.8125rem;
+  color: #9a8d7d;
+}
+
+.movimiento-card__productos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.movimiento-card__producto {
+  border-bottom: 1px solid #f0ebe4;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.movimiento-card__producto-nombre {
+  margin: 0;
+  padding: 0.75rem 1.25rem 0.35rem;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #4a3f32;
+  background: #fcfaf8;
+}
+
+.movimiento-card__lineas {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0;
+}
+
+.movimiento-card__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 1.25rem;
+  border-bottom: 1px solid #f5f1ec;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.movimiento-card__insumo {
+  font-weight: 500;
+  color: #3d3429;
+}
+
+.movimiento-card__cantidad {
+  font-size: 0.9rem;
+  color: #b42318;
+  background: #fef3f2;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}

@@ -1,0 +1,57 @@
+<section class="admin-page empresa-config">
+  <header class="admin-page__header no-print">
+    <div>
+      <h1>Datos del negocio</h1>
+      <p>Configura nombre, NIT, dirección y pie de ticket para impresión térmica profesional.</p>
+    </div>
+    <app-button variant="secondary" (clicked)="preview()">Vista previa ticket</app-button>
+  </header>
+
+  <div *ngIf="loading" class="admin-card__state no-print">Cargando…</div>
+  <div *ngIf="!loading && errorMessage" class="admin-card__state admin-card__state--error no-print">
+    {{ errorMessage }}
+  </div>
+
+  <article *ngIf="!loading && !errorMessage" class="admin-card empresa-carta-card no-print">
+    <h2>Carta digital pública</h2>
+    <p>
+      Comparte este enlace o genera un código QR para que tus clientes vean el menú en el celular.
+      Solo muestra productos <strong>activos</strong>.
+    </p>
+    <div class="empresa-carta-card__url">
+      <code>{{ cartaUrl }}</code>
+      <div class="empresa-carta-card__actions">
+        <app-button size="sm" variant="secondary" (clicked)="copyCartaLink()">Copiar enlace</app-button>
+        <a [href]="routes.CARTA_PUBLICA" target="_blank" rel="noopener" class="empresa-carta-card__open">
+          Ver carta
+        </a>
+      </div>
+    </div>
+      <p class="empresa-carta-card__hint">
+      El mensaje de bienvenida usa el texto del <em>pie de ticket</em>. Los clientes pueden armar el pedido y enviarlo por WhatsApp.
+      Tip: QR por mesa con <code>/carta?mesa=4</code>
+    </p>
+  </article>
+
+  <article *ngIf="!loading && !errorMessage" class="admin-card no-print">
+    <form [formGroup]="form" (ngSubmit)="save()" class="empresa-config__form">
+      <app-input label="Nombre comercial" formControlName="nombre_comercial"></app-input>
+      <app-input label="Razón social" formControlName="razon_social"></app-input>
+      <app-input label="NIT" formControlName="nit"></app-input>
+      <app-input label="Dirección" formControlName="direccion"></app-input>
+      <app-input label="Ciudad" formControlName="ciudad"></app-input>
+      <app-input label="Teléfono" formControlName="telefono"></app-input>
+      <app-input label="Correo" type="email" formControlName="email"></app-input>
+      <label class="empresa-config__textarea">
+        <span>Pie de ticket</span>
+        <textarea formControlName="pie_ticket" rows="2"></textarea>
+      </label>
+
+      <app-button type="submit" [loading]="saving">Guardar configuración</app-button>
+    </form>
+  </article>
+
+  <div *ngIf="previewTicket" class="thermal-print-host">
+    <app-thermal-receipt [ticket]="previewTicket"></app-thermal-receipt>
+  </div>
+</section>

@@ -1,0 +1,103 @@
+<section class="admin-page">
+  <header class="admin-page__header">
+    <div>
+      <h1>Compras</h1>
+      <p>Historial de compras registradas a proveedores e ingresos a inventario.</p>
+    </div>
+    <a class="admin-page__add" [routerLink]="routes.ADMIN_INVENTARIO_COMPRAS_NUEVA">
+      + Nueva compra
+    </a>
+  </header>
+
+  <article class="admin-card">
+    <div class="admin-card__toolbar">
+      <div class="admin-card__search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          type="search"
+          [formControl]="searchControl"
+          placeholder="Buscar por número, proveedor u observación..."
+          aria-label="Buscar compras"
+        />
+      </div>
+      <span class="admin-card__count" *ngIf="!loading">
+        {{ totalItems }} compra{{ totalItems === 1 ? '' : 's' }}
+      </span>
+    </div>
+
+    <div *ngIf="loading" class="admin-card__state">Cargando compras...</div>
+
+    <div *ngIf="!loading && errorMessage" class="admin-card__state admin-card__state--error">
+      {{ errorMessage }}
+      <button type="button" (click)="loadCompras()">Reintentar</button>
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && compras.length === 0" class="admin-card__state">
+      No hay compras registradas.
+      <a [routerLink]="routes.ADMIN_INVENTARIO_COMPRAS_NUEVA">Registrar la primera compra</a>
+    </div>
+
+    <div *ngIf="!loading && !errorMessage && compras.length > 0" class="table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>No.</th>
+            <th>Fecha</th>
+            <th>Proveedor</th>
+            <th>Líneas</th>
+            <th>Costo total</th>
+            <th>Utilidad pot.</th>
+            <th>Factura</th>
+            <th>Registró</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let compra of compras">
+            <td data-label="No.">
+              <strong>#{{ folio(compra.id_compra) }}</strong>
+            </td>
+            <td data-label="Fecha">{{ formatDate(compra.fecha_compra) }}</td>
+            <td data-label="Proveedor">{{ compra.proveedor_nombre || 'Sin proveedor' }}</td>
+            <td data-label="Líneas">{{ compra.total_lineas }}</td>
+            <td data-label="Costo total">{{ formatCurrency(compra.total_costo) }}</td>
+            <td data-label="Utilidad">
+              <ng-container *ngIf="+compra.total_venta_potencial > 0; else sinUtilidad">
+                <span
+                  class="compra-utilidad"
+                  [class.compra-utilidad--negativa]="+compra.utilidad_potencial < 0"
+                >
+                  {{ formatCurrency(compra.utilidad_potencial) }}
+                </span>
+              </ng-container>
+              <ng-template #sinUtilidad>
+                <span class="compra-na">No aplica</span>
+              </ng-template>
+            </td>
+            <td data-label="Factura">
+              <span class="status-badge" [class.status-badge--active]="compra.tiene_factura">
+                {{ compra.tiene_factura ? 'Sí' : 'No' }}
+              </span>
+            </td>
+            <td data-label="Registró">{{ compra.registrado_por || 'No registrado' }}</td>
+            <td data-label="Acciones">
+              <a class="compra-link" [routerLink]="detalleUrl(compra.id_compra)">Ver detalle</a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <app-paginator
+      *ngIf="!loading && totalItems > 0"
+      [page]="page"
+      [pageSize]="pageSize"
+      [totalItems]="totalItems"
+      [pageSizeOptions]="pageSizeOptions"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    ></app-paginator>
+  </article>
+</section>

@@ -13,7 +13,9 @@ import {
   CrearClienteRequest,
   PaginatedResult,
   TipoDocumento,
+  TipoUsuario,
   TIPOS_DOCUMENTO_FALLBACK,
+  TIPOS_USUARIO,
 } from '../models/cliente.model';
 
 const CLIENTES_ENDPOINT = '/clientes';
@@ -26,6 +28,7 @@ export class ClienteService {
     const page = params.page ?? 1;
     const pageSize = params.pageSize ?? 10;
     const search = params.search?.trim() ?? '';
+    const tipoUsuario = params.tipoUsuario?.trim().toUpperCase() ?? '';
 
     const query: Record<string, string> = {
       page: String(page),
@@ -34,7 +37,7 @@ export class ClienteService {
     if (search) query['search'] = search;
 
     return this.api.get<unknown>(CLIENTES_ENDPOINT, query).pipe(
-      map((response) => this.toPaginatedResult(response, page, pageSize, search)),
+      map((response) => this.toPaginatedResult(response, page, pageSize, search, tipoUsuario)),
       catchError((error) =>
         throwError(() => new Error(parseApiError(error, 'Error al cargar los clientes')))
       )
@@ -100,11 +103,16 @@ export class ClienteService {
     response: unknown,
     page: number,
     pageSize: number,
-    search: string
+    search: string,
+    tipoUsuario: string
   ): PaginatedResult<Cliente> {
     let items = extractApiList<Cliente>(response, 'No se pudieron cargar los clientes').map(
       (item) => this.normalize(item)
     );
+
+    if (tipoUsuario) {
+      items = items.filter((c) => c.tipo_usuario === tipoUsuario);
+    }
 
     if (search) {
       const term = search.toLowerCase();
@@ -116,6 +124,7 @@ export class ClienteService {
           c.numero_documento.toLowerCase().includes(term) ||
           c.telefono.toLowerCase().includes(term) ||
           c.estado.toLowerCase().includes(term) ||
+          c.tipo_usuario.toLowerCase().includes(term) ||
           String(c.tipo_documento).includes(term)
       );
     }
@@ -131,9 +140,14 @@ export class ClienteService {
   }
 
   private normalize(raw: Cliente): Cliente {
+    const tipoRaw = String(raw.tipo_usuario ?? 'CLIENTE').trim().toUpperCase();
+    const tipo_usuario = (TIPOS_USUARIO as readonly string[]).includes(tipoRaw)
+      ? (tipoRaw as TipoUsuario)
+      : 'CLIENTE';
+
     return {
       id_cliente: Number(raw.id_cliente),
-      tipo_usuario: String(raw.tipo_usuario ?? ''),
+      tipo_usuario,
       tipo_documento: raw.tipo_documento,
       numero_documento: String(raw.numero_documento ?? ''),
       nombre: String(raw.nombre ?? ''),

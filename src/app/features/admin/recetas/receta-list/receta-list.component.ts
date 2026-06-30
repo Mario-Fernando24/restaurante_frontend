@@ -10,6 +10,7 @@ import { forkJoin, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
 import { ButtonComponent } from '../../../../shared/components/button/button.component';
 import { InputComponent } from '../../../../shared/components/input/input.component';
+import { SelectComponent, SelectOption } from '../../../../shared/components/select/select.component';
 import { PaginatorComponent } from '../../../../shared/components/paginator/paginator.component';
 import { NotificationService } from '../../../../core/services/notification.service';
 import { Insumo } from '../../insumos/models/insumo.model';
@@ -32,6 +33,7 @@ import {
     ReactiveFormsModule,
     PaginatorComponent,
     InputComponent,
+    SelectComponent,
     ButtonComponent,
   ],
   templateUrl: './receta-list.component.html',
@@ -121,6 +123,28 @@ export class RecetaListComponent implements OnInit, OnDestroy {
     const insumo = this.insumosById.get(idInsumo);
     if (!insumo) return 'Indica cuánto de ese ingrediente se usa por cada unidad vendida';
     return `Cantidad en ${this.unidadLegible(insumo.unidad_medida)} (por 1 unidad vendida)`;
+  }
+
+  get productoOptions(): SelectOption<number>[] {
+    return this.productos.map((producto) => ({
+      value: producto.id_producto,
+      label: producto.nombre,
+    }));
+  }
+
+  get insumoOptions(): SelectOption<number>[] {
+    return this.insumos.map((insumo) => ({
+      value: insumo.id_insumo,
+      label: `${insumo.nombre} (${insumo.unidad_medida.toLowerCase()})`,
+    }));
+  }
+
+  get productoSelectHint(): string {
+    if (this.loadingSelectors) return 'Cargando productos...';
+    if (this.productos.length === 0) {
+      return 'No hay productos tipo PREPARADO. Créalos primero en Productos.';
+    }
+    return '';
   }
 
   get previewCostoInsumo(): string | null {

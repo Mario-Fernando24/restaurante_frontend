@@ -1,0 +1,71 @@
+<div
+  class="app-select"
+  [class.app-select--error]="!!error"
+  [class.app-select--disabled]="disabled"
+  [class.app-select--open]="isOpen"
+>
+  <label *ngIf="label" class="app-select__label" [for]="id">{{ label }}</label>
+
+  <div class="app-select__control">
+    <button
+      #triggerBtn
+      [id]="id"
+      type="button"
+      class="app-select__trigger"
+      [disabled]="disabled"
+      [attr.aria-expanded]="isOpen"
+      aria-haspopup="listbox"
+      (click)="toggleOpen()"
+      (keydown)="onTriggerKeydown($event)"
+    >
+      <span class="app-select__value" [class.app-select__value--placeholder]="!hasValue">
+        {{ hasValue ? selectedLabel : placeholder }}
+      </span>
+      <span class="app-select__chevron" aria-hidden="true">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="m6 9 6 6 6-6"/>
+        </svg>
+      </span>
+    </button>
+
+    <div
+      *ngIf="isOpen"
+      class="app-select__panel"
+      role="listbox"
+      [attr.aria-labelledby]="id"
+      [ngStyle]="panelStyle"
+    >
+      <button
+        *ngFor="let option of options; let i = index"
+        type="button"
+        class="app-select__option"
+        role="option"
+        [class.app-select__option--selected]="isSelected(option)"
+        [class.app-select__option--highlighted]="i === highlightedIndex"
+        [disabled]="option.disabled"
+        [attr.aria-selected]="isSelected(option)"
+        (click)="selectOption(option, i)"
+      >
+        <span class="app-select__option-label">{{ option.label }}</span>
+        <svg
+          *ngIf="isSelected(option)"
+          class="app-select__check"
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.5"
+          aria-hidden="true"
+        >
+          <path d="M20 6 9 17l-5-5"/>
+        </svg>
+      </button>
+
+      <p *ngIf="options.length === 0" class="app-select__empty">No hay opciones disponibles</p>
+    </div>
+  </div>
+
+  <p *ngIf="error" class="app-select__error">{{ error }}</p>
+  <p *ngIf="hint && !error" class="app-select__hint">{{ hint }}</p>
+</div>

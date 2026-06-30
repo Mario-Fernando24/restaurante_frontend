@@ -1,0 +1,159 @@
+.mesas-page__toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  input {
+    flex: 1;
+    max-width: 360px;
+    padding: 10px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+  }
+
+  span {
+    color: var(--color-text-secondary);
+    font-size: 13px;
+  }
+}
+
+.mesas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.mesa-card {
+  padding: 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  text-align: center;
+
+  &--inactive {
+    opacity: 0.65;
+  }
+
+  &__icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+  }
+
+  h2 {
+    margin: 0 0 4px;
+    font-size: 18px;
+  }
+
+  p {
+    margin: 0 0 10px;
+    font-size: 13px;
+    color: var(--color-text-secondary);
+  }
+
+  &__badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    background: var(--color-border);
+    color: var(--color-text-secondary);
+
+    &--active {
+      background: rgba(13, 148, 136, 0.12);
+      color: var(--color-primary);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 14px;
+
+    button {
+      border: 1px solid var(--color-border);
+      background: #fff;
+      border-radius: var(--radius-md);
+      padding: 8px 12px;
+      font-size: 13px;
+      cursor: pointer;
+
+      &:hover {
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+      }
+    }
+  }
+}
+
+.mesa-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+  padding: 16px;
+}
+
+.mesa-modal {
+  width: min(100%, 420px);
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-lg);
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+
+    h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    button {
+      border: none;
+      background: transparent;
+      font-size: 24px;
+      cursor: pointer;
+    }
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 13px;
+
+      input {
+        padding: 10px 12px;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+      }
+    }
+  }
+
+  &__error {
+    color: var(--color-error);
+    font-size: 13px;
+    margin: 0;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 8px;
+  }
+}

@@ -62,7 +62,7 @@
           <tr *ngFor="let registro of registros">
             <td data-label="ID">{{ registro.id_auditoria }}</td>
             <td data-label="Fecha">{{ formatDate(registro.fecha) }}</td>
-            <td data-label="Usuario">{{ registro.nombre_usuario ?? '—' }}</td>
+            <td data-label="Usuario">{{ registro.usuario ?? '—' }}</td>
             <td data-label="Módulo">
               <span class="status-badge status-badge--info">{{ registro.modulo }}</span>
             </td>

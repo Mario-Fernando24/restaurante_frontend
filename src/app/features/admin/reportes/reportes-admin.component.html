@@ -1,0 +1,192 @@
+<section class="admin-page reportes-page">
+  <header class="admin-page__header no-print">
+    <div>
+      <h1>Reportes administrativos</h1>
+      <p>
+        Análisis de ventas, utilidades, egresos y arqueos. Filtra por cliente, proveedor,
+        turno de caja y rango de fechas para tomar decisiones.
+      </p>
+    </div>
+    <app-button variant="secondary" (clicked)="imprimir()" [disabled]="!reporte">
+      Imprimir reporte
+    </app-button>
+  </header>
+
+  <article class="reportes-filters admin-card no-print">
+    <div class="reportes-filters__presets">
+      <button
+        *ngFor="let preset of presets"
+        type="button"
+        class="reportes-filters__preset"
+        [class.reportes-filters__preset--active]="activePreset === preset.id"
+        (click)="applyPreset(preset.id)"
+      >
+        {{ preset.label }}
+      </button>
+    </div>
+
+    <form [formGroup]="filterForm" class="reportes-filters__form" (ngSubmit)="submitFilters()">
+      <label>
+        <span>Desde</span>
+        <input type="date" formControlName="fecha_desde" />
+      </label>
+      <label>
+        <span>Hasta</span>
+        <input type="date" formControlName="fecha_hasta" />
+      </label>
+      <label>
+        <span>Cliente</span>
+        <select formControlName="id_cliente">
+          <option value="">Todos los clientes</option>
+          <option *ngFor="let cliente of clientes" [value]="cliente.id_cliente">
+            {{ cliente.nombre }} {{ cliente.apellido }}
+          </option>
+        </select>
+      </label>
+      <label>
+        <span>Proveedor</span>
+        <select formControlName="id_proveedor">
+          <option value="">Todos los proveedores</option>
+          <option *ngFor="let proveedor of proveedores" [value]="proveedor.id_cliente">
+            {{ proveedor.nombre }} {{ proveedor.apellido }}
+          </option>
+        </select>
+      </label>
+      <label>
+        <span>Arqueo / turno</span>
+        <select formControlName="id_arqueo">
+          <option value="">Todos los turnos</option>
+          <option *ngFor="let arqueo of arqueos" [value]="arqueo.id_arqueo">
+            #{{ arqueo.id_arqueo }} · {{ arqueo.cajero }} · {{ formatDate(arqueo.fecha_apertura) }}
+          </option>
+        </select>
+      </label>
+      <div class="reportes-filters__actions">
+        <app-button type="submit" [loading]="loadingReport">Generar reporte</app-button>
+        <app-button type="button" variant="ghost" (clicked)="clearFilters()">Limpiar filtros</app-button>
+      </div>
+    </form>
+  </article>
+
+  <div *ngIf="loadingReport" class="admin-card__state no-print">Generando reporte...</div>
+  <div *ngIf="errorMessage" class="admin-card__state admin-card__state--error no-print">
+    {{ errorMessage }}
+  </div>
+
+  <ng-container *ngIf="reporte && !loadingReport">
+    <section class="reportes-kpis">
+      <article
+        *ngFor="let kpi of kpis"
+        class="reportes-kpi"
+        [class.reportes-kpi--positive]="kpi.tone === 'positive'"
+        [class.reportes-kpi--negative]="kpi.tone === 'negative'"
+        [class.reportes-kpi--warning]="kpi.tone === 'warning'"
+      >
+        <span class="reportes-kpi__label">{{ kpi.label }}</span>
+        <strong class="reportes-kpi__value">{{ kpi.value }}</strong>
+        <p class="reportes-kpi__hint">{{ kpi.hint }}</p>
+      </article>
+    </section>
+
+    <p class="reportes-meta">
+      Período: {{ reporte.filtros.fecha_desde }} → {{ reporte.filtros.fecha_hasta }}
+      · Generado {{ formatDate(reporte.generado_en) }}
+    </p>
+
+    <section class="reportes-charts" *ngIf="chartsReady">
+      <article class="reportes-chart admin-card reportes-chart--wide">
+        <app-chart-canvas *ngIf="chartVentasDia" [config]="chartVentasDia"></app-chart-canvas>
+      </article>
+      <article class="reportes-chart admin-card">
+        <app-chart-canvas *ngIf="chartUtilidad" [config]="chartUtilidad"></app-chart-canvas>
+      </article>
+      <article class="reportes-chart admin-card">
+        <app-chart-canvas *ngIf="chartMetodos" [config]="chartMetodos"></app-chart-canvas>
+      </article>
+      <article class="reportes-chart admin-card reportes-chart--wide">
+        <app-chart-canvas *ngIf="chartVentasHora" [config]="chartVentasHora"></app-chart-canvas>
+      </article>
+      <article class="reportes-chart admin-card">
+        <app-chart-canvas *ngIf="chartGastos" [config]="chartGastos"></app-chart-canvas>
+      </article>
+      <article class="reportes-chart admin-card">
+        <app-chart-canvas *ngIf="chartFlujo" [config]="chartFlujo"></app-chart-canvas>
+      </article>
+      <article class="reportes-chart admin-card reportes-chart--wide">
+        <app-chart-canvas *ngIf="chartProductos" [config]="chartProductos"></app-chart-canvas>
+      </article>
+      <article class="reportes-chart admin-card reportes-chart--wide">
+        <app-chart-canvas *ngIf="chartCategorias" [config]="chartCategorias"></app-chart-canvas>
+      </article>
+      <article class="reportes-chart admin-card reportes-chart--wide">
+        <app-chart-canvas *ngIf="chartClientes" [config]="chartClientes"></app-chart-canvas>
+      </article>
+      <article class="reportes-chart admin-card reportes-chart--wide">
+        <app-chart-canvas *ngIf="chartProveedores" [config]="chartProveedores"></app-chart-canvas>
+      </article>
+    </section>
+
+    <article class="admin-card reportes-table-wrap">
+      <h2>Turnos de caja en el período</h2>
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Turno</th>
+              <th>Cajero</th>
+              <th>Estado</th>
+              <th>Apertura</th>
+              <th>Cierre</th>
+              <th>Ventas</th>
+              <th>Egresos</th>
+              <th>Diferencia</th>
+              <th># Ventas</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let arqueo of reporte.arqueos_resumen">
+              <td>#{{ arqueo.id_arqueo }}</td>
+              <td>{{ arqueo.cajero }}</td>
+              <td>{{ arqueo.estado }}</td>
+              <td>{{ formatDate(arqueo.fecha_apertura) }}</td>
+              <td>{{ formatDate(arqueo.fecha_cierre) }}</td>
+              <td>{{ formatCurrency(arqueo.total_ventas) }}</td>
+              <td>{{ formatCurrency(arqueo.total_gastos) }}</td>
+              <td>{{ formatCurrency(arqueo.diferencia) }}</td>
+              <td>{{ arqueo.cantidad_ventas }}</td>
+            </tr>
+            <tr *ngIf="reporte.arqueos_resumen.length === 0">
+              <td colspan="9">No hay turnos en el período seleccionado.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </article>
+
+    <article class="admin-card reportes-insights no-print">
+      <h2>Conclusiones rápidas</h2>
+      <ul>
+        <li *ngIf="reporte.resumen.cantidad_ventas > 0">
+          El ticket promedio fue de <strong>{{ formatCurrency(reporte.resumen.ticket_promedio) }}</strong>
+          con <strong>{{ reporte.resumen.cantidad_ventas }}</strong> ventas cobradas.
+        </li>
+        <li>
+          La utilidad neta estimada del período es
+          <strong>{{ formatCurrency(reporte.resumen.utilidad_neta_estimada) }}</strong>
+          (ingresos − compras − gastos).
+        </li>
+        <li *ngIf="reporte.resumen.cantidad_cortesias > 0">
+          Se registraron <strong>{{ reporte.resumen.cantidad_cortesias }}</strong> cortesías por
+          <strong>{{ formatCurrency(reporte.resumen.valor_cortesias) }}</strong> en valor referencial.
+        </li>
+        <li *ngIf="reporte.ventas_por_producto.length">
+          El producto líder fue <strong>{{ reporte.ventas_por_producto[0].producto }}</strong>
+          ({{ formatCurrency(reporte.ventas_por_producto[0].total) }}).
+        </li>
+        <li *ngIf="reporte.top_clientes.length">
+          El cliente que más compró fue <strong>{{ reporte.top_clientes[0].cliente }}</strong>.
+        </li>
+      </ul>
+    </article>
+  </ng-container>
+</section>

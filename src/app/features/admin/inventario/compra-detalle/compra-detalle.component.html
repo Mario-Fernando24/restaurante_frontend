@@ -1,0 +1,147 @@
+<section class="admin-page compra-detalle-page">
+  <header class="admin-page__header no-print">
+    <div>
+      <a class="compra-back" [routerLink]="routes.ADMIN_INVENTARIO_COMPRAS">← Volver a compras</a>
+      <h1 *ngIf="compra">Compra #{{ folio(compra.id_compra) }}</h1>
+      <h1 *ngIf="!compra && !loading">Detalle de compra</h1>
+      <p *ngIf="compra">{{ formatDate(compra.fecha_compra) }}</p>
+    </div>
+    <button
+      *ngIf="compra"
+      type="button"
+      class="compra-detalle-page__print"
+      (click)="imprimir()"
+    >
+      Imprimir comprobante
+    </button>
+  </header>
+
+  <div *ngIf="loading" class="admin-card__state no-print">Cargando compra...</div>
+
+  <div *ngIf="!loading && errorMessage" class="admin-card__state admin-card__state--error no-print">
+    {{ errorMessage }}
+    <a [routerLink]="routes.ADMIN_INVENTARIO_COMPRAS">Volver al listado</a>
+  </div>
+
+  <ng-container *ngIf="!loading && compra as doc">
+    <article class="admin-card no-print">
+      <div class="compra-detalle-meta">
+        <div>
+          <span>Proveedor</span>
+          <strong>{{ doc.proveedor_nombre || 'Sin proveedor' }}</strong>
+        </div>
+        <div>
+          <span>Registrado por</span>
+          <strong>{{ doc.registrado_por || 'No registrado' }}</strong>
+        </div>
+        <div>
+          <span>Costo total</span>
+          <strong>{{ formatCurrency(doc.total_costo) }}</strong>
+        </div>
+        <div *ngIf="tieneVentaDirecta">
+          <span>Venta potencial</span>
+          <strong>{{ formatCurrency(doc.total_venta_potencial) }}</strong>
+        </div>
+        <div *ngIf="tieneVentaDirecta">
+          <span>Utilidad potencial</span>
+          <strong class="compra-detalle-meta__utilidad">
+            {{ formatCurrency(doc.utilidad_potencial) }}
+          </strong>
+        </div>
+      </div>
+
+      <p *ngIf="doc.observacion" class="compra-detalle-obs">
+        <strong>Observaciones:</strong> {{ doc.observacion }}
+      </p>
+
+      <h2 class="compra-detalle-section-title">Ítems de la compra</h2>
+      <div class="table-wrap">
+        <table class="admin-table" [class.admin-table--sin-venta]="!tieneVentaDirecta">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Descripción</th>
+              <th>Tipo</th>
+              <th>Cantidad</th>
+              <th>Costo/u</th>
+              <th>Subtotal</th>
+              <th *ngIf="tieneVentaDirecta">P. venta</th>
+              <th *ngIf="tieneVentaDirecta">Utilidad</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let linea of doc.detalle; let i = index">
+              <td>{{ i + 1 }}</td>
+              <td>{{ nombreLinea(linea) }}</td>
+              <td>{{ tipoLinea(linea) }}</td>
+              <td>
+                {{ formatCantidadMovimiento(linea.cantidad) }}
+                <ng-container *ngIf="linea.tipo === 'INSUMO'">
+                  {{ unidadLabel(linea.unidad_medida) }}
+                </ng-container>
+                <ng-container *ngIf="linea.tipo === 'PRODUCTO_DIRECTO'"> unidades</ng-container>
+              </td>
+              <td>{{ formatCurrency(linea.costo_unitario) }}</td>
+              <td>
+                {{
+                  formatCurrency(
+                    linea.tipo === 'PRODUCTO_DIRECTO'
+                      ? linea.costo_total
+                      : +linea.cantidad * +linea.costo_unitario
+                  )
+                }}
+              </td>
+              <td *ngIf="tieneVentaDirecta">
+                <ng-container *ngIf="precioVentaLinea(linea) as precio">
+                  {{ formatCurrency(precio) }}
+                </ng-container>
+              </td>
+              <td *ngIf="tieneVentaDirecta">
+                <ng-container *ngIf="utilidadLinea(linea) as utilidad">
+                  {{ formatCurrency(utilidad) }}
+                </ng-container>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p *ngIf="!tieneVentaDirecta" class="compra-detalle-hint">
+        Compra de materia prima. La utilidad se calcula en las recetas de productos preparados.
+      </p>
+
+      <section *ngIf="doc.factura_url" class="compra-detalle-factura">
+        <h2 class="compra-detalle-section-title">Factura del proveedor</h2>
+        <img [src]="doc.factura_url" alt="Factura de la compra" />
+      </section>
+
+      <section *ngIf="movimientos.length > 0" class="compra-detalle-movimientos">
+        <h2 class="compra-detalle-section-title">Movimientos de inventario generados</h2>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Insumo</th>
+                <th *ngIf="tieneProductoEnMovimientos">Producto</th>
+                <th>Cantidad</th>
+                <th>Usuario</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let movimiento of movimientos">
+                <td>{{ movimiento.insumo_nombre }}</td>
+                <td *ngIf="tieneProductoEnMovimientos">{{ movimiento.producto_nombre }}</td>
+                <td>{{ formatCantidadMovimiento(movimiento.cantidad) }}</td>
+                <td>{{ movimiento.usuario || 'No registrado' }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </article>
+
+    <div *ngIf="ticketImpresion" class="thermal-print-host">
+      <app-thermal-receipt [ticket]="ticketImpresion"></app-thermal-receipt>
+    </div>
+  </ng-container>
+</section>

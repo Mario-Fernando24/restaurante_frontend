@@ -1,0 +1,244 @@
+<div class="carta-page" [class.carta-page--con-pedido]="pedido.length > 0">
+  <div *ngIf="loading" class="carta-page__loader">
+    <div class="carta-page__loader-ring"></div>
+    <p>Preparando la carta…</p>
+  </div>
+
+  <div *ngIf="!loading && errorMessage" class="carta-page__error">
+    <h1>No pudimos cargar la carta</h1>
+    <p>{{ errorMessage }}</p>
+  </div>
+
+  <ng-container *ngIf="!loading && carta && empresa">
+  <div class="carta-ambient" aria-hidden="true">
+    <div class="carta-ambient__orb carta-ambient__orb--1"></div>
+    <div class="carta-ambient__orb carta-ambient__orb--2"></div>
+    <div class="carta-ambient__grid"></div>
+  </div>
+
+    <header class="carta-hero">
+      <div class="carta-hero__glow"></div>
+      <div class="carta-hero__content">
+        <div class="carta-hero__badge-row">
+          <span class="carta-hero__live">
+            <span class="carta-hero__pulse"></span>
+            Carta actualizada
+          </span>
+          <span class="carta-hero__verified">Lugar verificado</span>
+        </div>
+        <span class="carta-hero__eyebrow">Bienvenido</span>
+        <h1>{{ empresa.nombre_comercial || empresa.razon_social }}</h1>
+        <p *ngIf="empresa.mensaje_bienvenida" class="carta-hero__tagline">
+          {{ empresa.mensaje_bienvenida }}
+        </p>
+        <p *ngIf="!empresa.mensaje_bienvenida" class="carta-hero__tagline">
+          Un espacio limpio y acogedor. Elige con calma, sin prisas ni sorpresas.
+        </p>
+
+        <ul class="carta-trust" aria-label="Garantías">
+          <li>
+            <span class="carta-trust__icon">✿</span>
+            <span>Precios claros</span>
+          </li>
+          <li>
+            <span class="carta-trust__icon">✿</span>
+            <span>Pedido directo al local</span>
+          </li>
+          <li>
+            <span class="carta-trust__icon">✿</span>
+            <span>{{ carta.total_productos }} opciones frescas</span>
+          </li>
+        </ul>
+
+        <div class="carta-hero__meta">
+          <span *ngIf="empresa.ciudad">{{ empresa.ciudad }}</span>
+          <span *ngIf="empresa.telefono">{{ empresa.telefono }}</span>
+        </div>
+      </div>
+    </header>
+
+    <nav *ngIf="categorias.length > 1" class="carta-nav" aria-label="Categorías">
+      <div class="carta-nav__track">
+        <button
+          *ngFor="let cat of categorias"
+          type="button"
+          class="carta-nav__pill"
+          [class.carta-nav__pill--active]="activeCategoryId === cat.id_categoria"
+          (click)="scrollToCategory(cat.id_categoria)"
+        >
+          {{ cat.nombre }}
+        </button>
+      </div>
+    </nav>
+
+    <main class="carta-main">
+      <div class="carta-intro glass-panel">
+        <p>
+          Tómate tu tiempo. Revisas el total antes de enviar.
+          <strong>Tú decides qué pedir</strong> — sin intermediarios.
+        </p>
+      </div>
+
+      <p *ngIf="categorias.length === 0" class="carta-empty">
+        Pronto tendremos novedades en el menú.
+      </p>
+
+      <section
+        *ngFor="let cat of categorias"
+        [id]="'categoria-' + cat.id_categoria"
+        [attr.data-categoria-id]="cat.id_categoria"
+        class="carta-section"
+      >
+        <header class="carta-section__head">
+          <h2>{{ cat.nombre }}</h2>
+          <span class="carta-section__count">{{ cat.productos.length }} opción{{ cat.productos.length === 1 ? '' : 'es' }}</span>
+        </header>
+
+        <div class="carta-grid">
+          <article
+            *ngFor="let producto of cat.productos"
+            class="carta-item"
+            [class.carta-item--en-pedido]="cantidadEnPedido(producto.id_producto) > 0"
+          >
+            <div
+              class="carta-item__media"
+              [class.carta-item__media--placeholder]="!imagenUrl(producto.imagen)"
+              [style.backgroundImage]="imagenUrl(producto.imagen) ? 'url(' + imagenUrl(producto.imagen) + ')' : null"
+            >
+              <span *ngIf="!imagenUrl(producto.imagen)">✦</span>
+              <span *ngIf="cantidadEnPedido(producto.id_producto) as qty" class="carta-item__badge">
+                {{ qty }}
+              </span>
+            </div>
+            <div class="carta-item__body">
+              <div class="carta-item__top">
+                <h3>{{ producto.nombre }}</h3>
+                <strong>{{ formatPrice(producto.precio_venta) }}</strong>
+              </div>
+              <p *ngIf="producto.descripcion">{{ producto.descripcion }}</p>
+              <button type="button" class="carta-item__add" (click)="agregarProducto(producto)">
+                <span class="carta-item__add-icon">+</span>
+                Agregar
+              </button>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer class="carta-footer">
+      <div class="carta-footer__seal">
+        <span>✿</span>
+        <p>Espacio cuidado · Caucasia POS</p>
+      </div>
+      <div class="carta-footer__brand">
+        <strong>{{ empresa.nombre_comercial }}</strong>
+        <p *ngIf="empresa.direccion">{{ empresa.direccion }}</p>
+        <p *ngIf="empresa.ciudad">{{ empresa.ciudad }}</p>
+      </div>
+
+      <div class="carta-footer__actions">
+        <a
+          *ngIf="whatsappContactoLink() as wa"
+          [href]="wa"
+          target="_blank"
+          rel="noopener"
+          class="carta-footer__link"
+        >
+          Escribir sin pedido
+        </a>
+        <a *ngIf="mapsLink() as maps" [href]="maps" target="_blank" rel="noopener" class="carta-footer__link">
+          Cómo llegar
+        </a>
+        <a *ngIf="empresa.telefono" [href]="'tel:' + empresa.telefono" class="carta-footer__link">
+          Llamar {{ empresa.telefono }}
+        </a>
+      </div>
+
+      <p class="carta-footer__note">
+        Precios en COP · actualizados · sin cargos ocultos
+      </p>
+    </footer>
+
+    <!-- Barra flotante del pedido -->
+    <div *ngIf="pedido.length > 0" class="carta-pedido-bar">
+      <button type="button" class="carta-pedido-bar__toggle" (click)="togglePedido()">
+        <span class="carta-pedido-bar__count">{{ pedidoItemsCount }}</span>
+        <span class="carta-pedido-bar__text">
+          Ver pedido · {{ formatPrice(pedidoSubtotal) }}
+        </span>
+        <span class="carta-pedido-bar__chevron" [class.carta-pedido-bar__chevron--open]="pedidoAbierto">▲</span>
+      </button>
+
+      <div class="carta-pedido-panel" [class.carta-pedido-panel--open]="pedidoAbierto">
+        <header class="carta-pedido-panel__head">
+          <div>
+            <h2>Tu pedido</h2>
+            <p class="carta-pedido-panel__sub">Revisa con calma antes de enviar</p>
+          </div>
+          <button type="button" class="carta-pedido-panel__clear" (click)="limpiarPedido()">
+            Vaciar
+          </button>
+        </header>
+
+        <label class="carta-pedido-panel__mesa">
+          <span>Número de mesa (opcional)</span>
+          <input
+            type="text"
+            [(ngModel)]="numeroMesa"
+            placeholder="Ej: 4, Terraza 2"
+            autocomplete="off"
+          />
+        </label>
+
+        <ul class="carta-pedido-panel__list">
+          <li *ngFor="let item of pedido; let i = index" class="carta-pedido-panel__item">
+            <div class="carta-pedido-panel__item-info">
+              <strong>{{ item.nombre }}</strong>
+              <span>{{ formatPrice(item.precio_venta) }} c/u</span>
+            </div>
+            <div class="carta-pedido-panel__qty">
+              <button type="button" (click)="decrementarItem(i)" aria-label="Menos">−</button>
+              <span>{{ item.cantidad }}</span>
+              <button type="button" (click)="incrementarItem(i)" aria-label="Más">+</button>
+            </div>
+            <strong class="carta-pedido-panel__line-total">
+              {{ formatPrice(item.precio_venta * item.cantidad) }}
+            </strong>
+          </li>
+        </ul>
+
+        <label class="carta-pedido-panel__nota">
+          <span>Nota para la cocina (opcional)</span>
+          <textarea
+            [(ngModel)]="notaPedido"
+            rows="2"
+            placeholder="Ej: sin cebolla, salsa aparte..."
+          ></textarea>
+        </label>
+
+        <div class="carta-pedido-panel__total">
+          <span>Total referencial</span>
+          <strong>{{ formatPrice(pedidoSubtotal) }}</strong>
+        </div>
+
+        <a
+          *ngIf="whatsappPedidoLink() as waPedido"
+          [href]="waPedido"
+          target="_blank"
+          rel="noopener"
+          class="carta-pedido-panel__wa"
+        >
+          <span class="carta-pedido-panel__wa-icon">✓</span>
+          Confirmar y enviar por WhatsApp
+        </a>
+        <p *ngIf="puedeEnviarPedido" class="carta-pedido-panel__secure">
+          Mensaje directo al restaurante · sin pasos extra
+        </p>
+        <p *ngIf="!puedeEnviarPedido" class="carta-pedido-panel__warn">
+          Configura el teléfono del restaurante para enviar pedidos.
+        </p>
+      </div>
+    </div>
+  </ng-container>
+</div>

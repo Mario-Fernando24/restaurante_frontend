@@ -61,7 +61,7 @@ export class AuditoriaService {
           a.modulo.toLowerCase().includes(term) ||
           a.accion.toLowerCase().includes(term) ||
           a.tabla_afectada.toLowerCase().includes(term) ||
-          (a.nombre_usuario ?? '').toLowerCase().includes(term)
+          (a.usuario ?? '').toLowerCase().includes(term)
       );
     }
 
@@ -74,7 +74,7 @@ export class AuditoriaService {
     return {
       id_auditoria: Number(raw.id_auditoria),
       fecha: String(raw.fecha ?? ''),
-      nombre_usuario: raw.nombre_usuario ? String(raw.nombre_usuario) : undefined,
+      usuario: raw.usuario ? String(raw.usuario) : undefined,
       modulo: String(raw.modulo ?? ''),
       accion: String(raw.accion ?? ''),
       tabla_afectada: String(raw.tabla_afectada ?? ''),

@@ -1,7 +1,35 @@
+export interface MovimientoLinea {
+  id_movimiento: number;
+  nombreInsumo: string;
+  cantidad: number;
+  cantidadLabel: string;
+}
+
+export interface MovimientoProductoGrupo {
+  nombreProducto: string;
+  lineas: MovimientoLinea[];
+}
+
+export interface MovimientoGrupo {
+  id: string;
+  titulo: string;
+  subtitulo: string;
+  tipo_movimiento: string;
+  esVenta: boolean;
+  nombre_usuario?: string;
+  fecha: string;
+  /** Agrupación por producto vendido (solo ventas). */
+  productos: MovimientoProductoGrupo[];
+  /** Líneas planas para movimientos que no son ventas. */
+  lineas: MovimientoLinea[];
+}
+
 export interface MovimientoInventario {
   id_movimiento: number;
   id_insumo: number;
   nombre_insumo?: string;
+  id_producto?: number;
+  nombre_producto?: string;
   tipo_movimiento: string;
   cantidad: number;
   motivo: string;

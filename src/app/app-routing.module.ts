@@ -8,9 +8,15 @@ import {
   ADMIN_AREA_GUARDS,
   CAJERO_AREA_GUARDS,
 } from './core/routing/area-guards';
+import { CartaPublicaComponent } from './features/public/carta/carta-publica.component';
 
 const routes: Routes = [
   { path: '', redirectTo: REDIRECT_PATHS.LOGIN, pathMatch: 'full' },
+
+  {
+    path: ROUTE_SEGMENTS.CARTA,
+    component: CartaPublicaComponent,
+  },
 
   {
     path: ROUTE_SEGMENTS.AUTH,

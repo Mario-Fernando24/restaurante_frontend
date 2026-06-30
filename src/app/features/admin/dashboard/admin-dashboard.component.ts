@@ -187,7 +187,7 @@ export class AdminDashboardComponent implements OnInit, OnDestroy {
       time: this.formatRelativeTime(item.fecha),
       detail: `${item.modulo} · ${item.accion}`,
       amount: item.tabla_afectada,
-      status: item.nombre_usuario ?? 'Sistema',
+      status: item.usuario ?? 'Sistema',
     };
   }
 

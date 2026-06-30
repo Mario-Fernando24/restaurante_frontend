@@ -1,0 +1,87 @@
+@import '../../../shared/styles/admin-crud.scss';
+
+.empresa-config {
+  &__form {
+    display: grid;
+    gap: 1rem;
+    max-width: 560px;
+  }
+
+  &__textarea {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+
+    span {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #5c534a;
+    }
+
+    textarea {
+      border: 1px solid #ddd5cb;
+      border-radius: 10px;
+      padding: 0.65rem 0.75rem;
+      font: inherit;
+      resize: vertical;
+    }
+  }
+}
+
+.empresa-carta-card {
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0 0 8px;
+    font-size: 18px;
+  }
+
+  p {
+    margin: 0 0 14px;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  &__url {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    border-radius: var(--radius-md);
+    background: var(--color-bg-soft);
+    border: 1px solid var(--color-border);
+
+    code {
+      flex: 1;
+      min-width: 200px;
+      font-size: 13px;
+      word-break: break-all;
+      color: var(--color-primary-dark);
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  &__open {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+
+  &__hint {
+    margin-top: 12px !important;
+    font-size: 12px !important;
+  }
+}

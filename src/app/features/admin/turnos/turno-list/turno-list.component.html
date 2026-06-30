@@ -1,26 +1,36 @@
 <section class="admin-page">
   <header class="admin-page__header">
     <div>
-      <h1>Turnos</h1>
-      <p>Historial de aperturas y cierres de caja.</p>
+      <h1>Turnos de caja</h1>
+      <p>Selecciona un turno para ver ventas, medios de pago y resumen del cajero.</p>
     </div>
   </header>
 
   <article class="admin-card">
     <div class="admin-card__toolbar">
-      <div class="admin-card__search">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
-        <input
-          type="search"
-          [formControl]="searchControl"
-          placeholder="Buscar por usuario o estado..."
-          aria-label="Buscar turnos"
-        />
+      <div class="admin-card__filters">
+        <div class="admin-card__search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input
+            type="search"
+            [formControl]="searchControl"
+            placeholder="Buscar por cajero o estado..."
+            aria-label="Buscar turnos"
+          />
+        </div>
+        <div class="admin-card__search turno-select-wrap">
+          <select [formControl]="turnoSelect" aria-label="Seleccionar turno">
+            <option [ngValue]="null">Seleccionar turno...</option>
+            <option *ngFor="let turno of turnosSelector" [ngValue]="turno.id_arqueo">
+              {{ getTurnoLabel(turno) }}
+            </option>
+          </select>
+        </div>
       </div>
       <span class="admin-card__count" *ngIf="!loading">
-        {{ totalItems }} resultado{{ totalItems === 1 ? '' : 's' }}
+        {{ totalItems }} turno{{ totalItems === 1 ? '' : 's' }}
       </span>
     </div>
 
@@ -39,40 +49,48 @@
       <table class="admin-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Usuario</th>
-            <th>Monto apertura</th>
-            <th>Monto cierre</th>
+            <th>Turno</th>
+            <th>Cajero</th>
+            <th>Base inicial</th>
+            <th>Cierre real</th>
             <th>Estado</th>
             <th>Apertura</th>
             <th>Cierre</th>
+            <th></th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let turno of turnos">
-            <td data-label="ID">{{ turno.id_arqueo }}</td>
-            <td data-label="Usuario">{{ turno.cajero ?? '—' }}</td>
-            <td data-label="Monto apertura">{{ formatCurrency(turno.monto_apertura) }}</td>
-            <td data-label="Monto cierre">{{ formatCurrency(turno.monto_cierre) }}</td>
+          <tr
+            *ngFor="let turno of turnos"
+            [class.turno-row--selected]="isSelected(turno.id_arqueo)"
+          >
+            <td data-label="Turno">#{{ turno.id_arqueo }}</td>
+            <td data-label="Cajero">{{ turno.cajero ?? '—' }}</td>
+            <td data-label="Base inicial">{{ formatCurrency(turno.monto_apertura) }}</td>
+            <td data-label="Cierre real">
+              {{ formatCurrency(turno.monto_cierre_real ?? turno.monto_cierre) }}
+            </td>
             <td data-label="Estado">
               <span
                 class="status-badge"
                 [class.status-badge--active]="isAbierto(turno.estado)"
                 [class.status-badge--inactive]="!isAbierto(turno.estado)"
               >
-                {{ turno.estado }}
+                {{ isAbierto(turno.estado) ? 'Abierto' : 'Cerrado' }}
               </span>
             </td>
             <td data-label="Apertura">{{ formatDate(turno.fecha_apertura) }}</td>
-            <td data-label="Cierre" *ngIf="turno.fecha_cierre">{{ formatDate(turno.fecha_cierre) }}</td>
-
-            <td *ngIf="!turno.fecha_cierre" data-label="Estado">
-              <span
-                class="status-badge"
-                [class.status-badge--active]="isAbierto(turno.estado)"
-                [class.status-badge--inactive]="!isAbierto(turno.estado)">
-                En curso
-              </span>
+            <td data-label="Cierre">
+              {{ turno.fecha_cierre ? formatDate(turno.fecha_cierre) : 'En curso' }}
+            </td>
+            <td data-label="Acción">
+              <button
+                type="button"
+                class="action-btn action-btn--edit"
+                (click)="seleccionarTurno(turno.id_arqueo)"
+              >
+                Ver resumen
+              </button>
             </td>
           </tr>
         </tbody>
@@ -88,5 +106,172 @@
       (pageChange)="onPageChange($event)"
       (pageSizeChange)="onPageSizeChange($event)"
     ></app-paginator>
+  </article>
+
+  <article *ngIf="selectedId" class="admin-card turno-detalle">
+    <div *ngIf="loadingDetalle" class="admin-card__state">Cargando resumen del turno...</div>
+
+    <div *ngIf="!loadingDetalle && detalleError" class="admin-card__state admin-card__state--error">
+      {{ detalleError }}
+      <button type="button" (click)="seleccionarTurno(selectedId)">Reintentar</button>
+    </div>
+
+    <ng-container *ngIf="!loadingDetalle && detalle && !detalleError">
+      <header class="turno-detalle__header">
+        <div>
+          <h2>Resumen turno #{{ detalle.arqueo.id_arqueo }}</h2>
+          <p>
+            {{ detalle.arqueo.cajero ?? 'Cajero' }}
+            · {{ formatDate(detalle.arqueo.fecha_apertura) }}
+            <span *ngIf="detalle.arqueo.fecha_cierre">
+              → {{ formatDate(detalle.arqueo.fecha_cierre) }}
+            </span>
+          </p>
+        </div>
+        <span
+          class="status-badge"
+          [class.status-badge--active]="isAbierto(detalle.arqueo.estado)"
+          [class.status-badge--inactive]="!isAbierto(detalle.arqueo.estado)"
+        >
+          {{ detalle.arqueo.estado }}
+        </span>
+      </header>
+
+      <div class="turno-kpis">
+        <div class="turno-kpi">
+          <span>Transacciones</span>
+          <strong>{{ detalle.resumen.cantidad_ventas }}</strong>
+        </div>
+        <div class="turno-kpi">
+          <span>Total vendido</span>
+          <strong>{{ formatCurrency(detalle.resumen.total_ventas) }}</strong>
+        </div>
+        <div class="turno-kpi">
+          <span>Base inicial</span>
+          <strong>{{ formatCurrency(detalle.resumen.base_inicial) }}</strong>
+        </div>
+        <div class="turno-kpi">
+          <span>Dinero esperado</span>
+          <strong>{{ formatCurrency(detalle.resumen.dinero_esperado) }}</strong>
+        </div>
+        <div class="turno-kpi" *ngIf="detalle.arqueo.monto_cierre_real != null">
+          <span>Dinero contado</span>
+          <strong>{{ formatCurrency(detalle.arqueo.monto_cierre_real) }}</strong>
+        </div>
+        <div class="turno-kpi" *ngIf="detalle.arqueo.diferencia != null">
+          <span>{{ getDiferenciaLabel(detalle.arqueo.diferencia) }}</span>
+          <strong
+            [class.turno-kpi__neg]="detalle.arqueo.diferencia < 0"
+            [class.turno-kpi__pos]="detalle.arqueo.diferencia > 0"
+          >
+            {{ formatCurrency(detalle.arqueo.diferencia) }}
+          </strong>
+        </div>
+      </div>
+
+      <section class="turno-section">
+        <h3>Medios de pago</h3>
+        <div *ngIf="detalle.pagos_por_metodo.length === 0" class="turno-section__empty">
+          Sin ventas registradas en este turno.
+        </div>
+        <table *ngIf="detalle.pagos_por_metodo.length > 0" class="turno-table">
+          <thead>
+            <tr>
+              <th>Medio</th>
+              <th># Pagos</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let pago of detalle.pagos_por_metodo">
+              <td>{{ getMetodoLabel(pago.metodo_pago) }}</td>
+              <td>{{ pago.cantidad }}</td>
+              <td>{{ formatCurrency(pago.total) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <div class="turno-grid">
+        <section class="turno-section">
+          <h3>Ventas por categoría</h3>
+          <div *ngIf="detalle.por_categoria.length === 0" class="turno-section__empty">—</div>
+          <table *ngIf="detalle.por_categoria.length > 0" class="turno-table">
+            <thead>
+              <tr>
+                <th>Categoría</th>
+                <th>Cant.</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of detalle.por_categoria">
+                <td>{{ item.categoria }}</td>
+                <td>{{ item.cantidad }}</td>
+                <td>{{ formatCurrency(item.total) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="turno-section">
+          <h3>Ventas por producto</h3>
+          <div *ngIf="detalle.por_producto.length === 0" class="turno-section__empty">—</div>
+          <table *ngIf="detalle.por_producto.length > 0" class="turno-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Cant.</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of detalle.por_producto">
+                <td>
+                  <strong>{{ item.producto }}</strong>
+                  <div class="turno-table__sub">{{ item.categoria }}</div>
+                </td>
+                <td>{{ item.cantidad }}</td>
+                <td>{{ formatCurrency(item.total) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </div>
+
+      <section class="turno-section">
+        <h3>Detalle de transacciones</h3>
+        <div *ngIf="detalle.ventas.length === 0" class="turno-section__empty">
+          No hay ventas en este turno.
+        </div>
+        <div *ngIf="detalle.ventas.length > 0" class="table-wrap">
+          <table class="turno-table turno-table--ventas">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Hora</th>
+                <th>Productos</th>
+                <th>Pagos</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let venta of detalle.ventas">
+                <td>{{ venta.id_venta }}</td>
+                <td>{{ formatTime(venta.fecha_creacion) }}</td>
+                <td>{{ getProductosVenta(venta) }}</td>
+                <td>
+                  <div *ngFor="let pago of venta.pagos" class="turno-pago-line">
+                    {{ getMetodoLabel(pago.metodo_pago) }} · {{ formatCurrency(pago.monto) }}
+                    <span *ngIf="pago.referencia"> (Ref: {{ pago.referencia }})</span>
+                  </div>
+                </td>
+                <td>{{ formatCurrency(venta.total) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </ng-container>
   </article>
 </section>

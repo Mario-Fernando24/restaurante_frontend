@@ -17,7 +17,9 @@ import {
   Cliente,
   ClienteEstado,
   TIPOS_USUARIO,
+  TIPO_USUARIO_LABELS,
   TipoDocumento,
+  TipoUsuario,
 } from '../models/cliente.model';
 import { ClienteService } from '../services/cliente.service';
 
@@ -38,11 +40,13 @@ type ModalMode = 'create' | 'edit';
 })
 export class ClienteListComponent implements OnInit, OnDestroy {
   readonly searchControl = new FormControl('', { nonNullable: true });
+  readonly tipoUsuarioControl = new FormControl<TipoUsuario | ''>('', { nonNullable: true });
   readonly pageSizeOptions = [5, 10, 25, 50];
   readonly tiposUsuario = TIPOS_USUARIO;
+  readonly tipoUsuarioLabels = TIPO_USUARIO_LABELS;
 
   readonly clienteForm = this.fb.group({
-    tipo_usuario: ['', Validators.required],
+    tipo_usuario: ['CLIENTE' as TipoUsuario, Validators.required],
     tipo_documento: [null as number | null, Validators.required],
     numero_documento: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(20)]],
     nombre: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
@@ -90,6 +94,11 @@ export class ClienteListComponent implements OnInit, OnDestroy {
         this.loadClientes();
       });
 
+    this.tipoUsuarioControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
+      this.page = 1;
+      this.loadClientes();
+    });
+
     this.loadTiposDocumento();
     this.loadClientes();
   }
@@ -100,17 +109,26 @@ export class ClienteListComponent implements OnInit, OnDestroy {
   }
 
   get modalTitle(): string {
-    return this.modalMode === 'create' ? 'Nuevo cliente' : 'Editar cliente';
+    return this.modalMode === 'create' ? 'Nuevo registro' : 'Editar registro';
   }
 
   get modalDescription(): string {
     return this.modalMode === 'create'
-      ? 'Completa los datos para registrar un cliente.'
-      : 'Actualiza los datos del cliente seleccionado.';
+      ? 'Registra un cliente o proveedor con sus datos de contacto.'
+      : 'Actualiza los datos del registro seleccionado.';
   }
 
   get submitLabel(): string {
-    return this.modalMode === 'create' ? 'Crear cliente' : 'Guardar cambios';
+    return this.modalMode === 'create' ? 'Crear registro' : 'Guardar cambios';
+  }
+
+  getTipoUsuarioLabel(tipo: TipoUsuario | string): string {
+    const key = String(tipo).toUpperCase() as TipoUsuario;
+    return this.tipoUsuarioLabels[key] ?? key;
+  }
+
+  isProveedor(tipo: TipoUsuario | string): boolean {
+    return String(tipo).toUpperCase() === 'PROVEEDOR';
   }
 
   get tipoUsuarioError(): string {
@@ -197,7 +215,7 @@ export class ClienteListComponent implements OnInit, OnDestroy {
     this.modalMode = 'create';
     this.editingCliente = null;
     this.formError = '';
-    this.clienteForm.reset();
+    this.clienteForm.reset({ tipo_usuario: 'CLIENTE' });
     this.showModal = true;
   }
 
@@ -207,7 +225,7 @@ export class ClienteListComponent implements OnInit, OnDestroy {
     this.formError = '';
     this.clienteForm.reset();
     this.clienteForm.patchValue({
-      tipo_usuario: cliente.tipo_usuario,
+      tipo_usuario: (cliente.tipo_usuario ?? 'CLIENTE') as TipoUsuario,
       tipo_documento: Number(cliente.tipo_documento) || null,
       numero_documento: cliente.numero_documento,
       nombre: cliente.nombre,
@@ -264,6 +282,7 @@ export class ClienteListComponent implements OnInit, OnDestroy {
 
     this.clienteService
       .actualizarCliente(this.editingCliente!.id_cliente, {
+        tipo_usuario: request.tipo_usuario as TipoUsuario,
         nombre: request.nombre,
         apellido: request.apellido,
         telefono: request.telefono,
@@ -302,6 +321,7 @@ export class ClienteListComponent implements OnInit, OnDestroy {
     this.clienteService
       .getClientes({
         search: this.searchControl.value,
+        tipoUsuario: this.tipoUsuarioControl.value,
         page: this.page,
         pageSize: this.pageSize,
       })

@@ -140,41 +140,24 @@
       <div *ngIf="formError" class="modal__error">{{ formError }}</div>
       <div *ngIf="selectorsError" class="modal__error">{{ selectorsError }}</div>
 
-      <div class="form-field" [class.form-field--error]="idProductoError">
-        <label class="form-field__label" for="receta-producto">¿Qué producto preparas?</label>
-        <select
-          id="receta-producto"
-          class="form-field__select"
-          formControlName="id_producto"
-          [disabled]="loadingSelectors || productos.length === 0"
-        >
-          <option [ngValue]="null" disabled>Selecciona un producto</option>
-          <option *ngFor="let producto of productos" [ngValue]="producto.id_producto">
-            {{ producto.nombre }}
-          </option>
-        </select>
-        <span *ngIf="idProductoError" class="form-field__error">{{ idProductoError }}</span>
-        <span *ngIf="loadingSelectors" class="form-field__hint">Cargando productos...</span>
-        <span *ngIf="!loadingSelectors && productos.length === 0" class="form-field__hint">
-          No hay productos tipo PREPARADO. Créalos primero en Productos.
-        </span>
-      </div>
+      <app-select
+        label="¿Qué producto preparas?"
+        placeholder="Selecciona un producto"
+        formControlName="id_producto"
+        [options]="productoOptions"
+        [disabled]="loadingSelectors || productos.length === 0"
+        [error]="idProductoError"
+        [hint]="productoSelectHint"
+      ></app-select>
 
-      <div class="form-field" [class.form-field--error]="idInsumoError">
-        <label class="form-field__label" for="receta-insumo">¿Qué ingrediente usa?</label>
-        <select
-          id="receta-insumo"
-          class="form-field__select"
-          formControlName="id_insumo"
-          [disabled]="insumos.length === 0"
-        >
-          <option [ngValue]="null" disabled>Selecciona un ingrediente</option>
-          <option *ngFor="let insumo of insumos" [ngValue]="insumo.id_insumo">
-            {{ insumo.nombre }} ({{ insumo.unidad_medida | lowercase }})
-          </option>
-        </select>
-        <span *ngIf="idInsumoError" class="form-field__error">{{ idInsumoError }}</span>
-      </div>
+      <app-select
+        label="¿Qué ingrediente usa?"
+        placeholder="Selecciona un ingrediente"
+        formControlName="id_insumo"
+        [options]="insumoOptions"
+        [disabled]="insumos.length === 0"
+        [error]="idInsumoError"
+      ></app-select>
 
       <app-input
         label="¿Cuánto se gasta por cada venta?"

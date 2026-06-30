@@ -1,0 +1,196 @@
+<section class="pos-page mesa-comanda-page">
+  <header class="pos-page__header mesa-comanda-page__header">
+    <div>
+      <a [routerLink]="routes.CAJERO_MESAS" class="mesa-comanda-page__back">← Volver a mesas</a>
+      <h1>{{ mesaNombre }}</h1>
+      <p>
+        {{ mesaZona || 'Salón' }}
+        <span *ngIf="comanda"> · Pedido desde {{ comanda.fecha_apertura | date: 'shortTime' }}</span>
+        <span class="mesa-comanda-page__save" [class.mesa-comanda-page__save--visible]="saving || savedPulse">
+          {{ saving ? 'Guardando...' : 'Pedido guardado ✓' }}
+        </span>
+      </p>
+    </div>
+
+    <div class="mesa-comanda-page__actions">
+      <a [routerLink]="routes.CAJERO_POS" class="mesa-comanda-page__venta-link">
+        Venta directa
+      </a>
+      <div class="pos-page__search">
+        <input
+          type="search"
+          [value]="searchTerm"
+          (input)="searchTerm = $any($event.target).value"
+          placeholder="Buscar producto..."
+        />
+      </div>
+    </div>
+  </header>
+
+  <div *ngIf="loading" class="pos-page__state">Cargando mesa...</div>
+  <div *ngIf="!loading && errorMessage" class="pos-page__state pos-page__state--error">
+    {{ errorMessage }}
+    <app-button variant="secondary" size="sm" (clicked)="loadData()">Reintentar</app-button>
+  </div>
+
+  <div *ngIf="!loading && !errorMessage" class="pos-layout">
+    <main class="pos-catalog">
+      <p *ngIf="gruposProductos.length === 0" class="pos-catalog__empty">
+        No hay productos activos.
+      </p>
+
+      <section *ngFor="let grupo of gruposProductos" class="pos-category">
+        <h2>{{ grupo.categoria }}</h2>
+        <div class="pos-grid">
+          <button
+            *ngFor="let producto of grupo.productos"
+            type="button"
+            class="pos-product"
+            [disabled]="!canAddProducts"
+            (click)="addToCart(producto)"
+          >
+            <div
+              class="pos-product__image"
+              [style.backgroundImage]="getImagenUrl(producto.imagen) ? 'url(' + getImagenUrl(producto.imagen) + ')' : null"
+            >
+              <span *ngIf="!producto.imagen">🍽</span>
+            </div>
+            <strong>{{ producto.nombre }}</strong>
+            <span>{{ formatCurrency(producto.precio_venta) }}</span>
+          </button>
+        </div>
+      </section>
+    </main>
+
+    <aside class="pos-cart mesa-comanda-page__cart">
+      <header class="pos-cart__header">
+        <h2>Cuenta de mesa</h2>
+        <span>{{ cartItemsCount }} ítem{{ cartItemsCount === 1 ? '' : 's' }}</span>
+      </header>
+
+      <div *ngIf="cart.length === 0" class="pos-cart__empty">
+        Toca productos para agregarlos a la cuenta. Se guardan solos.
+      </div>
+
+      <ul *ngIf="cart.length > 0" class="pos-cart__list">
+        <li *ngFor="let item of cart; let i = index" class="pos-cart__item">
+          <div class="pos-cart__item-info">
+            <strong>{{ item.producto.nombre }}</strong>
+            <span>{{ formatCurrency(item.producto.precio_venta) }} c/u</span>
+          </div>
+          <div class="pos-cart__qty">
+            <button type="button" (click)="decrementItem(i)">−</button>
+            <span>{{ item.cantidad }}</span>
+            <button type="button" (click)="incrementItem(i)">+</button>
+          </div>
+          <strong class="pos-cart__line-total">
+            {{ formatCurrency(item.producto.precio_venta * item.cantidad) }}
+          </strong>
+          <button type="button" class="pos-cart__remove" (click)="removeItem(i)">×</button>
+        </li>
+      </ul>
+
+      <footer class="pos-cart__footer">
+        <div class="pos-cart__total">
+          <span>Total cuenta</span>
+          <strong>{{ formatCurrency(cartSubtotal) }}</strong>
+        </div>
+
+        <app-button [fullWidth]="true" [disabled]="!canCheckout" (clicked)="openCheckout(false)">
+          Cobrar mesa
+        </app-button>
+
+        <app-button
+          variant="secondary"
+          [fullWidth]="true"
+          [disabled]="!canCheckout"
+          (clicked)="openCheckout(true)"
+        >
+          Cortesía
+        </app-button>
+
+        <app-button variant="ghost" [fullWidth]="true" (clicked)="liberarMesa()">
+          Liberar mesa
+        </app-button>
+      </footer>
+    </aside>
+  </div>
+
+  <div
+    *ngIf="checkoutOpen"
+    class="pos-checkout-overlay"
+    (click)="closeCheckout()"
+  >
+    <div class="pos-checkout" (click)="$event.stopPropagation()">
+      <header class="pos-checkout__header">
+        <div>
+          <h2>{{ modoCortesia ? 'Cortesía' : 'Cobrar' }} · {{ mesaNombre }}</h2>
+          <p>Total <strong>{{ formatCurrency(cartSubtotal) }}</strong></p>
+        </div>
+        <button type="button" class="pos-checkout__close" (click)="closeCheckout()">×</button>
+      </header>
+
+      <form [formGroup]="checkoutForm" (ngSubmit)="submitCobro()">
+        <label class="pos-checkout__field">
+          <span>Cliente (opcional)</span>
+          <select formControlName="id_cliente">
+            <option value="">Sin cliente</option>
+            <option *ngFor="let cliente of clientes" [value]="cliente.id_cliente">
+              {{ cliente.nombre }} {{ cliente.apellido }}
+            </option>
+          </select>
+        </label>
+
+        <label *ngIf="modoCortesia" class="pos-checkout__field">
+          <span>Motivo cortesía</span>
+          <textarea formControlName="observacion_cortesia" rows="2"></textarea>
+        </label>
+
+        <div *ngIf="!modoCortesia" formArrayName="pagos" class="pos-checkout__pagos">
+          <div
+            *ngFor="let pago of pagos.controls; let i = index"
+            [formGroupName]="i"
+            class="pos-checkout__pago"
+          >
+            <label>
+              <span>Método</span>
+              <select formControlName="metodo_pago">
+                <option *ngFor="let metodo of metodosPago" [value]="metodo.metodo_pago">
+                  {{ metodo.nombre }}
+                </option>
+              </select>
+            </label>
+            <label>
+              <span>Monto</span>
+              <input type="number" formControlName="monto" min="0" step="1" />
+            </label>
+            <label *ngIf="metodoRequiereReferencia(i)">
+              <span>Referencia</span>
+              <input type="text" formControlName="referencia" />
+            </label>
+            <button *ngIf="pagos.length > 1" type="button" (click)="removePago(i)">Quitar</button>
+          </div>
+        </div>
+
+        <div *ngIf="!modoCortesia" class="pos-checkout__pagos-summary">
+          <span>Pagado: {{ formatCurrency(pagosTotal) }}</span>
+        </div>
+
+        <app-button *ngIf="!modoCortesia" type="button" variant="secondary" size="sm" (clicked)="addPago()">
+          + Otro pago
+        </app-button>
+
+        <div class="pos-checkout__actions">
+          <app-button type="button" variant="ghost" (clicked)="closeCheckout()">Cancelar</app-button>
+          <app-button type="submit" [loading]="submitting">
+            {{ modoCortesia ? 'Registrar cortesía' : 'Confirmar cobro' }}
+          </app-button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div *ngIf="ticketImpresion" class="thermal-print-host">
+    <app-thermal-receipt [ticket]="ticketImpresion"></app-thermal-receipt>
+  </div>
+</section>

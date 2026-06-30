@@ -1,0 +1,73 @@
+<section class="gasto-page admin-page">
+  <header class="admin-page__header no-print">
+    <div>
+      <h1>Egresos de caja</h1>
+      <p>Registra nómina, gastos administrativos y otros egresos con comprobante térmico.</p>
+    </div>
+  </header>
+
+  <div *ngIf="loading" class="admin-card__state no-print">Cargando…</div>
+  <div *ngIf="!loading && errorMessage" class="admin-card__state admin-card__state--error no-print">
+    {{ errorMessage }}
+  </div>
+
+  <article *ngIf="!loading && !errorMessage" class="admin-card no-print">
+    <form [formGroup]="form" (ngSubmit)="submit()" class="gasto-form">
+      <label class="gasto-form__field">
+        <span>Tipo de egreso</span>
+        <select formControlName="tipo">
+          <option *ngFor="let tipo of tipos" [value]="tipo.value">{{ tipo.label }}</option>
+        </select>
+      </label>
+
+      <app-input
+        label="Concepto"
+        formControlName="concepto"
+        placeholder="Ej: Pago servicios públicos"
+      ></app-input>
+
+      <app-input
+        *ngIf="esNomina"
+        label="Beneficiario (empleado)"
+        formControlName="beneficiario"
+        placeholder="Nombre del colaborador"
+      ></app-input>
+
+      <app-input
+        label="Monto"
+        type="number"
+        formControlName="monto"
+        placeholder="0"
+      ></app-input>
+
+      <label class="gasto-form__field">
+        <span>Método de pago</span>
+        <select formControlName="metodo_pago">
+          <option *ngFor="let metodo of metodosPago" [value]="metodo.metodo_pago">
+            {{ metodo.nombre }}
+          </option>
+        </select>
+      </label>
+
+      <app-input
+        *ngIf="metodoRequiereReferencia()"
+        label="Referencia"
+        formControlName="referencia"
+        placeholder="Número de comprobante"
+      ></app-input>
+
+      <label class="gasto-form__field">
+        <span>Observación (opcional)</span>
+        <textarea formControlName="observacion" rows="2"></textarea>
+      </label>
+
+      <app-button type="submit" [loading]="submitting" [fullWidth]="true">
+        Registrar e imprimir
+      </app-button>
+    </form>
+  </article>
+
+  <div *ngIf="ticketImpresion" class="thermal-print-host">
+    <app-thermal-receipt [ticket]="ticketImpresion"></app-thermal-receipt>
+  </div>
+</section>

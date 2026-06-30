@@ -1,0 +1,45 @@
+.mesa-comanda-page {
+  &__header {
+    align-items: center;
+  }
+
+  &__back {
+    display: inline-block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: var(--color-primary);
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  &__venta-link {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  &__save {
+    margin-left: 8px;
+    font-size: 12px;
+    color: var(--color-primary);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+
+    &--visible {
+      opacity: 1;
+    }
+  }
+
+  &__cart .pos-cart__header {
+    background: linear-gradient(135deg, #b45309, #d97706);
+  }
+}

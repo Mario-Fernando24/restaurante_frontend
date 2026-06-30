@@ -35,6 +35,27 @@
     }
   }
 
+  &__search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  &__mesas-link {
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    background: rgba(13, 148, 136, 0.1);
+    color: var(--color-primary);
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+
+    &:hover {
+      background: rgba(13, 148, 136, 0.18);
+    }
+  }
+
   &__search input {
     min-width: 260px;
     padding: 12px 16px;

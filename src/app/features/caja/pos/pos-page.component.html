@@ -3,15 +3,19 @@
     <div>
       <h1>Punto de venta</h1>
       <p *ngIf="arqueo && arqueoService.isAbierto(arqueo)">
-        Turno #{{ arqueo.id_arqueo }} · Apertura {{ formatCurrency(arqueo.monto_apertura) }}
+        Turno #{{ arqueo.id_arqueo }}
+        · {{ arqueo.cajero }}
+        · Base {{ formatCurrency(arqueo.monto_apertura) }}
+        · Apertura {{ formatDate(arqueo.fecha_apertura) }}
       </p>
       <p *ngIf="!loading && (!arqueo || !arqueoService.isAbierto(arqueo))" class="pos-page__warn">
-        Debes abrir un turno antes de vender.
-        <a [routerLink]="routes.CAJERO_TURNO">Ir a gestión de turno</a>
+        Debes registrar la apertura de caja antes de vender.
+        <a [routerLink]="routes.CAJERO_TURNO">Ir a apertura de caja</a>
       </p>
     </div>
 
     <div class="pos-page__search">
+      <a [routerLink]="routes.CAJERO_MESAS" class="pos-page__mesas-link">Mesas</a>
       <input
         type="search"
         [value]="searchTerm"
@@ -42,7 +46,7 @@
             *ngFor="let producto of grupo.productos"
             type="button"
             class="pos-product"
-            [disabled]="!canCheckout"
+            [disabled]="!canAddProducts"
             (click)="addToCart(producto)"
           >
             <div
@@ -97,9 +101,18 @@
         <app-button
           [fullWidth]="true"
           [disabled]="!canCheckout"
-          (clicked)="openCheckout()"
+          (clicked)="openCheckout(false)"
         >
           Cobrar
+        </app-button>
+
+        <app-button
+          variant="secondary"
+          [fullWidth]="true"
+          [disabled]="!canCheckout"
+          (clicked)="openCheckout(true)"
+        >
+          Cortesía / La casa invita
         </app-button>
 
         <app-button
@@ -124,8 +137,11 @@
     <div class="pos-checkout" (click)="$event.stopPropagation()">
       <header class="pos-checkout__header">
         <div>
-          <h2>Finalizar venta</h2>
-          <p>Total a cobrar: <strong>{{ formatCurrency(cartSubtotal) }}</strong></p>
+          <h2>{{ modoCortesia ? 'Registrar cortesía' : 'Finalizar venta' }}</h2>
+          <p>
+            Total {{ modoCortesia ? 'referencial' : 'a cobrar' }}:
+            <strong>{{ formatCurrency(cartSubtotal) }}</strong>
+          </p>
         </div>
         <button type="button" class="pos-checkout__close" (click)="closeCheckout()">×</button>
       </header>
@@ -141,7 +157,16 @@
           </select>
         </label>
 
-        <div formArrayName="pagos" class="pos-checkout__pagos">
+        <label *ngIf="modoCortesia" class="pos-checkout__field">
+          <span>Motivo de la cortesía</span>
+          <textarea
+            formControlName="observacion_cortesia"
+            rows="2"
+            placeholder="Ej: La casa invita este perro al carbón al cliente amigo"
+          ></textarea>
+        </label>
+
+        <div *ngIf="!modoCortesia" formArrayName="pagos" class="pos-checkout__pagos">
           <div
             *ngFor="let pago of pagos.controls; let i = index"
             [formGroupName]="i"
@@ -177,22 +202,34 @@
           </div>
         </div>
 
-        <div class="pos-checkout__pagos-summary">
+        <div *ngIf="!modoCortesia" class="pos-checkout__pagos-summary">
           <span>Pagado: {{ formatCurrency(pagosTotal) }}</span>
           <span [class.pos-checkout__diff]="pagosTotal !== cartSubtotal">
             Diferencia: {{ formatCurrency(cartSubtotal - pagosTotal) }}
           </span>
         </div>
 
-        <app-button type="button" variant="secondary" size="sm" (clicked)="addPago()">
+        <app-button
+          *ngIf="!modoCortesia"
+          type="button"
+          variant="secondary"
+          size="sm"
+          (clicked)="addPago()"
+        >
           + Agregar método de pago
         </app-button>
 
         <div class="pos-checkout__actions">
           <app-button type="button" variant="ghost" (clicked)="closeCheckout()">Cancelar</app-button>
-          <app-button type="submit" [loading]="submitting">Confirmar venta</app-button>
+          <app-button type="submit" [loading]="submitting">
+            {{ modoCortesia ? 'Registrar cortesía e imprimir' : 'Confirmar venta e imprimir' }}
+          </app-button>
         </div>
       </form>
     </div>
+  </div>
+
+  <div *ngIf="ticketImpresion" class="thermal-print-host">
+    <app-thermal-receipt [ticket]="ticketImpresion"></app-thermal-receipt>
   </div>
 </section>

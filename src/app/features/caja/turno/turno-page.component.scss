@@ -1,5 +1,5 @@
 .turno-page {
-  max-width: 640px;
+  max-width: 720px;
 
   &__header {
     margin-bottom: 24px;
@@ -15,6 +15,7 @@
       margin: 0;
       color: var(--color-text-secondary);
       font-size: 14px;
+      line-height: 1.5;
     }
   }
 
@@ -37,6 +38,27 @@
   }
 }
 
+.turno-alert {
+  margin-bottom: 16px;
+  padding: 16px 18px;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(217, 119, 6, 0.25);
+  background: #fff7ed;
+  color: #9a3412;
+
+  strong {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+}
+
 .turno-card,
 .turno-summary {
   background: var(--color-surface);
@@ -47,7 +69,7 @@
   margin-bottom: 16px;
 
   h2 {
-    margin: 0 0 8px;
+    margin: 0 0 4px;
     font-size: 18px;
     font-weight: 700;
   }
@@ -56,6 +78,68 @@
     margin: 0 0 20px;
     color: var(--color-text-secondary);
     font-size: 14px;
+    line-height: 1.5;
+  }
+
+  &--result {
+    border-color: rgba(5, 150, 105, 0.25);
+    background: linear-gradient(180deg, var(--color-success-soft) 0%, var(--color-surface) 120px);
+  }
+}
+
+.turno-card__section-title {
+  display: flex;
+  gap: 14px;
+  margin-bottom: 20px;
+
+  p {
+    margin: 4px 0 0;
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+.turno-card__step {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f3ede6;
+  color: #6b5a47;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.turno-meta {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #faf8f6;
+  border: 1px solid #efe8e0;
+
+  &__wide {
+    grid-column: 1 / -1;
+  }
+
+  &__label {
+    display: block;
+    margin-bottom: 4px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--color-text-muted);
+  }
+
+  strong {
+    font-size: 15px;
+    color: var(--color-text);
   }
 }
 
@@ -96,10 +180,78 @@
     }
   }
 
+  &__full {
+    grid-column: 1 / -1;
+  }
+
   &__estado {
     text-transform: capitalize;
     color: var(--color-success);
   }
+
+  &__actions {
+    margin-top: 18px;
+  }
+
+  &__diff--pos {
+    color: var(--color-success);
+  }
+
+  &__diff--neg {
+    color: var(--color-error);
+  }
+}
+
+.turno-resumen {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 16px;
+  margin: 0 0 20px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #faf8f6;
+  border: 1px solid #efe8e0;
+
+  dt {
+    margin: 0 0 2px;
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  &__total,
+  &__highlight {
+    grid-column: 1 / -1;
+    padding-top: 8px;
+    border-top: 1px solid #e8e0d8;
+
+    dd {
+      font-size: 18px;
+      color: var(--color-success);
+    }
+  }
+
+  &--cierre {
+    margin-bottom: 16px;
+  }
+}
+
+.turno-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--color-primary);
+  color: #fff;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .turno-form {
@@ -108,8 +260,44 @@
   gap: 16px;
 }
 
-@media (max-width: 480px) {
-  .turno-summary__grid {
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  &__label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  &__textarea {
+    width: 100%;
+    min-height: 88px;
+    padding: 12px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    font: inherit;
+    resize: vertical;
+    background: #fff;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.12);
+    }
+  }
+
+  &__hint {
+    font-size: 12px;
+    color: var(--color-text-muted);
+  }
+}
+
+@media (max-width: 560px) {
+  .turno-summary__grid,
+  .turno-resumen,
+  .turno-meta {
     grid-template-columns: 1fr;
   }
 }

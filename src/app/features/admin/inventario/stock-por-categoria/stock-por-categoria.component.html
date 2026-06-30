@@ -1,0 +1,128 @@
+<section class="admin-page stock-report">
+  <header class="admin-page__header no-print">
+    <div>
+      <h1>Inventario por categoría</h1>
+      <p>Consulta cuánto stock queda de cada insumo, agrupado por categoría de producto.</p>
+    </div>
+    <div class="stock-report__actions">
+      <button type="button" class="admin-page__add stock-report__print" (click)="imprimir()">
+        Imprimir
+      </button>
+    </div>
+  </header>
+
+  <article class="admin-card no-print">
+    <div class="admin-card__toolbar">
+      <div class="admin-card__search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input
+          type="search"
+          [formControl]="searchControl"
+          placeholder="Buscar insumo o categoría..."
+          aria-label="Buscar en inventario"
+        />
+      </div>
+      <button type="button" class="stock-report__refresh" (click)="loadReporte()">Actualizar</button>
+    </div>
+
+    <div *ngIf="loading" class="admin-card__state">Cargando inventario...</div>
+
+    <div *ngIf="!loading && errorMessage" class="admin-card__state admin-card__state--error">
+      {{ errorMessage }}
+      <button type="button" (click)="loadReporte()">Reintentar</button>
+    </div>
+  </article>
+
+  <div class="stock-print-area" *ngIf="!loading && !errorMessage && reporte">
+    <header class="stock-print-header">
+      <div>
+        <h2>Inventario por categoría</h2>
+        <p>Generado: {{ formatDate(reporte.fecha_consulta) }}</p>
+      </div>
+      <div class="stock-print-header__meta">
+        <span>{{ reporte.total_insumos }} insumos</span>
+        <span *ngIf="totalStockBajo > 0">{{ totalStockBajo }} con stock bajo</span>
+      </div>
+    </header>
+
+    <div
+      *ngIf="gruposFiltrados.length === 0 && sinCategoriaFiltrados.length === 0"
+      class="admin-card__state"
+    >
+      No hay insumos para mostrar.
+    </div>
+
+    <section *ngFor="let grupo of gruposFiltrados" class="stock-grupo">
+      <header class="stock-grupo__header">
+        <h3>{{ grupo.nombre }}</h3>
+        <span>{{ grupo.insumos.length }} insumo{{ grupo.insumos.length === 1 ? '' : 's' }}</span>
+      </header>
+
+      <table class="stock-table">
+        <thead>
+          <tr>
+            <th>Insumo</th>
+            <th>Disponible</th>
+            <th>Mínimo</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let insumo of grupo.insumos" [class.stock-table__row--bajo]="insumo.stock_bajo">
+            <td>{{ insumo.nombre }}</td>
+            <td>{{ formatStock(insumo.stock_actual, insumo.unidad_medida) }}</td>
+            <td>{{ formatStock(insumo.stock_minimo, insumo.unidad_medida) }}</td>
+            <td>
+              <span
+                class="status-badge"
+                [class.status-badge--warning]="insumo.stock_bajo"
+                [class.status-badge--active]="!insumo.stock_bajo"
+              >
+                {{ insumo.stock_bajo ? 'Stock bajo' : 'OK' }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section *ngIf="sinCategoriaFiltrados.length > 0" class="stock-grupo">
+      <header class="stock-grupo__header">
+        <h3>Sin categoría</h3>
+        <span>Insumos no vinculados a recetas de productos</span>
+      </header>
+
+      <table class="stock-table">
+        <thead>
+          <tr>
+            <th>Insumo</th>
+            <th>Disponible</th>
+            <th>Mínimo</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let insumo of sinCategoriaFiltrados"
+            [class.stock-table__row--bajo]="insumo.stock_bajo"
+          >
+            <td>{{ insumo.nombre }}</td>
+            <td>{{ formatStock(insumo.stock_actual, insumo.unidad_medida) }}</td>
+            <td>{{ formatStock(insumo.stock_minimo, insumo.unidad_medida) }}</td>
+            <td>
+              <span
+                class="status-badge"
+                [class.status-badge--warning]="insumo.stock_bajo"
+                [class.status-badge--active]="!insumo.stock_bajo"
+              >
+                {{ insumo.stock_bajo ? 'Stock bajo' : 'OK' }}
+              </span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+</section>

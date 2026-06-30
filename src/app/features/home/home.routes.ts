@@ -3,6 +3,9 @@ import { ROUTE_SEGMENTS } from '../../core/routing/route-paths';
 import { arqueoActivoGuard } from '../caja/guards/arqueo-activo.guard';
 import { PosPageComponent } from '../caja/pos/pos-page.component';
 import { TurnoPageComponent } from '../caja/turno/turno-page.component';
+import { GastoPageComponent } from '../caja/gastos/gasto-page.component';
+import { MesasSalonComponent } from '../caja/mesas/mesas-salon/mesas-salon.component';
+import { MesaComandaComponent } from '../caja/mesas/mesa-comanda/mesa-comanda.component';
 import { MainLayoutComponent } from '../../layout/main-layout/main-layout.component';
 import { HomeDashboardComponent } from './dashboard/home-dashboard.component';
 
@@ -17,6 +20,21 @@ export const CAJERO_ROUTES: Routes = [
       {
         path: ROUTE_SEGMENTS.POS,
         component: PosPageComponent,
+        canActivate: [arqueoActivoGuard],
+      },
+      {
+        path: ROUTE_SEGMENTS.MESAS,
+        component: MesasSalonComponent,
+        canActivate: [arqueoActivoGuard],
+      },
+      {
+        path: `${ROUTE_SEGMENTS.MESAS}/:idMesa`,
+        component: MesaComandaComponent,
+        canActivate: [arqueoActivoGuard],
+      },
+      {
+        path: ROUTE_SEGMENTS.GASTOS,
+        component: GastoPageComponent,
         canActivate: [arqueoActivoGuard],
       },
     ],

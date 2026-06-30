@@ -2,7 +2,10 @@
   <header class="admin-page__header">
     <div>
       <h1>Movimientos de inventario</h1>
-      <p>Consulta el historial de entradas, salidas y ajustes de stock.</p>
+      <p>
+        Historial de entradas y salidas. Las ventas se agrupan por número de venta
+        y muestran cada producto vendido con los insumos que se descontaron.
+      </p>
     </div>
   </header>
 
@@ -16,19 +19,19 @@
           <input
             type="search"
             [formControl]="searchControl"
-            placeholder="Buscar por insumo, motivo o usuario..."
+            placeholder="Buscar por venta, producto, insumo o usuario..."
             aria-label="Buscar movimientos"
           />
         </div>
         <div class="admin-card__search">
           <select [formControl]="tipoControl" aria-label="Filtrar por tipo">
             <option value="">Todos los tipos</option>
-            <option *ngFor="let tipo of tiposMovimiento" [value]="tipo">{{ tipo }}</option>
+            <option *ngFor="let tipo of tiposMovimiento" [value]="tipo">{{ getTipoLabel(tipo) }}</option>
           </select>
         </div>
       </div>
       <span class="admin-card__count" *ngIf="!loading">
-        {{ totalItems }} resultado{{ totalItems === 1 ? '' : 's' }}
+        {{ totalItems }} registro{{ totalItems === 1 ? '' : 's' }}
       </span>
     </div>
 
@@ -39,41 +42,45 @@
       <button type="button" (click)="loadMovimientos()">Reintentar</button>
     </div>
 
-    <div *ngIf="!loading && !errorMessage && movimientos.length === 0" class="admin-card__state">
+    <div *ngIf="!loading && !errorMessage && grupos.length === 0" class="admin-card__state">
       No se encontraron movimientos.
     </div>
 
-    <div *ngIf="!loading && !errorMessage && movimientos.length > 0" class="table-wrap">
-      <table class="admin-table">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Insumo</th>
-            <th>Tipo</th>
-            <th>Cantidad</th>
-            <th>Motivo</th>
-            <th>Usuario</th>
-            <th>Fecha</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let movimiento of movimientos">
-            <td data-label="ID">{{ movimiento.id_movimiento }}</td>
-            <td data-label="Insumo">
-              <strong>{{ movimiento.nombre_insumo ?? movimiento.id_insumo }}</strong>
-            </td>
-            <td data-label="Tipo">
-              <span class="status-badge" [ngClass]="getTipoBadgeClass(movimiento.tipo_movimiento)">
-                {{ movimiento.tipo_movimiento }}
-              </span>
-            </td>
-            <td data-label="Cantidad">{{ movimiento.cantidad }}</td>
-            <td data-label="Motivo">{{ movimiento.motivo }}</td>
-            <td data-label="Usuario">{{ movimiento.nombre_usuario ?? '—' }}</td>
-            <td data-label="Fecha">{{ formatDate(movimiento.fecha_creacion) }}</td>
-          </tr>
-        </tbody>
-      </table>
+    <div *ngIf="!loading && !errorMessage && grupos.length > 0" class="movimiento-list">
+      <article *ngFor="let grupo of grupos" class="movimiento-card">
+        <header class="movimiento-card__header">
+          <div class="movimiento-card__title-row">
+            <h2 class="movimiento-card__title">{{ grupo.titulo }}</h2>
+            <span class="status-badge" [ngClass]="getTipoBadgeClass(grupo.tipo_movimiento)">
+              {{ grupo.esVenta ? 'Venta' : getTipoLabel(grupo.tipo_movimiento) }}
+            </span>
+          </div>
+          <p class="movimiento-card__subtitle">{{ grupo.subtitulo }}</p>
+          <div class="movimiento-card__meta">
+            <span>{{ formatDate(grupo.fecha) }}</span>
+            <span *ngIf="grupo.nombre_usuario">· {{ grupo.nombre_usuario }}</span>
+          </div>
+        </header>
+
+        <ul *ngIf="grupo.esVenta && grupo.productos.length" class="movimiento-card__productos">
+          <li *ngFor="let producto of grupo.productos" class="movimiento-card__producto">
+            <h3 class="movimiento-card__producto-nombre">{{ producto.nombreProducto }}</h3>
+            <ul class="movimiento-card__lineas">
+              <li *ngFor="let linea of producto.lineas" class="movimiento-card__item">
+                <span class="movimiento-card__insumo">{{ linea.nombreInsumo }}</span>
+                <span class="movimiento-card__cantidad">− {{ linea.cantidadLabel }}</span>
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <ul *ngIf="!grupo.esVenta && grupo.lineas.length" class="movimiento-card__lineas">
+          <li *ngFor="let linea of grupo.lineas" class="movimiento-card__item">
+            <span class="movimiento-card__insumo">{{ linea.nombreInsumo }}</span>
+            <span class="movimiento-card__cantidad">− {{ linea.cantidadLabel }}</span>
+          </li>
+        </ul>
+      </article>
     </div>
 
     <app-paginator

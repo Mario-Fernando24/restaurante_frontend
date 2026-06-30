@@ -10,12 +10,17 @@ import { RouterLink } from '@angular/router';
 import { forkJoin, Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { ROUTES } from '../../../core/routing/route-paths';
+import { Empresa } from '../../../core/models/empresa.model';
+import { EmpresaService } from '../../../core/services/empresa.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { Cliente } from '../../admin/clientes/models/cliente.model';
 import { ClienteService } from '../../admin/clientes/services/cliente.service';
 import { Producto } from '../../admin/productos/models/producto.model';
 import { ProductoService } from '../../admin/productos/services/producto.service';
 import { ButtonComponent } from '../../../shared/components/button/button.component';
+import { ThermalReceiptComponent } from '../../../shared/thermal/thermal-receipt.component';
+import { ThermalTicket } from '../../../shared/thermal/thermal-ticket.model';
+import { buildVentaTicket, printThermalTicket } from '../../../shared/thermal/thermal-ticket.util';
 import { Arqueo } from '../models/arqueo.model';
 import { MetodoPago, VentaPagoPayload } from '../models/venta.model';
 import { ArqueoService } from '../services/arqueo.service';
@@ -34,7 +39,7 @@ interface ProductoGrupo {
 @Component({
   selector: 'app-pos-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink, ButtonComponent],
+  imports: [CommonModule, ReactiveFormsModule, RouterLink, ButtonComponent, ThermalReceiptComponent],
   templateUrl: './pos-page.component.html',
   styleUrls: ['./pos-page.component.scss'],
 })
@@ -50,11 +55,15 @@ export class PosPageComponent implements OnInit, OnDestroy {
   loading = true;
   errorMessage = '';
   checkoutOpen = false;
+  modoCortesia = false;
   submitting = false;
   searchTerm = '';
+  empresa: Empresa | null = null;
+  ticketImpresion: ThermalTicket | null = null;
 
   readonly checkoutForm = this.fb.group({
     id_cliente: [''],
+    observacion_cortesia: ['', Validators.maxLength(255)],
     pagos: this.fb.array([this.createPagoGroup()]),
   });
 
@@ -66,6 +75,7 @@ export class PosPageComponent implements OnInit, OnDestroy {
     private productoService: ProductoService,
     private clienteService: ClienteService,
     private ventaService: VentaService,
+    private empresaService: EmpresaService,
     private notification: NotificationService
   ) {}
 
@@ -126,12 +136,12 @@ export class PosPageComponent implements OnInit, OnDestroy {
     }, 0);
   }
 
+  get canAddProducts(): boolean {
+    return !!this.arqueo && this.arqueoService.isAbierto(this.arqueo);
+  }
+
   get canCheckout(): boolean {
-    return (
-      !!this.arqueo &&
-      this.arqueoService.isAbierto(this.arqueo) &&
-      this.cart.length > 0
-    );
+    return this.canAddProducts && this.cart.length > 0;
   }
 
   loadData(): void {
@@ -143,16 +153,20 @@ export class PosPageComponent implements OnInit, OnDestroy {
       productos: this.productoService.getProductos({ page: 1, pageSize: 500 }),
       clientes: this.clienteService.getClientes({ page: 1, pageSize: 500 }),
       metodos: this.ventaService.getMetodosPago(),
+      empresa: this.empresaService.getEmpresa(),
     })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: ({ arqueo, productos, clientes, metodos }) => {
+        next: ({ arqueo, productos, clientes, metodos, empresa }) => {
           this.arqueo = arqueo;
+          this.empresa = empresa;
           this.productos = productos.items.filter(
             (p) => p.estado.toLowerCase() === 'activo'
           );
           this.clientes = clientes.items.filter(
-            (c) => c.estado.toLowerCase() === 'activo'
+            (c) =>
+              c.estado.toLowerCase() === 'activo' &&
+              c.tipo_usuario.toUpperCase() === 'CLIENTE'
           );
           this.metodosPago = metodos;
           this.loading = false;
@@ -218,55 +232,71 @@ export class PosPageComponent implements OnInit, OnDestroy {
   clearCart(): void {
     this.cart = [];
     this.checkoutOpen = false;
+    this.modoCortesia = false;
   }
 
-  openCheckout(): void {
+  openCheckout(cortesia = false): void {
     if (!this.canCheckout) return;
+    this.modoCortesia = cortesia;
     this.checkoutOpen = true;
     this.pagos.clear();
-    this.pagos.push(this.createPagoGroup());
-    this.pagos.at(0).patchValue({ monto: this.cartSubtotal });
-    this.checkoutForm.patchValue({ id_cliente: '' });
+    if (!cortesia) {
+      this.pagos.push(this.createPagoGroup());
+      this.pagos.at(0).patchValue({ monto: this.cartSubtotal });
+    }
+    this.checkoutForm.patchValue({ id_cliente: '', observacion_cortesia: '' });
   }
 
   closeCheckout(): void {
     this.checkoutOpen = false;
+    this.modoCortesia = false;
   }
 
   submitVenta(): void {
-    if (!this.arqueo || !this.canCheckout) return;
+    if (!this.arqueo || !this.canCheckout || !this.empresa) return;
 
-    for (let i = 0; i < this.pagos.length; i++) {
-      const group = this.pagos.at(i);
-      if (group.invalid) {
-        group.markAllAsTouched();
+    const observacionCortesia = this.checkoutForm.value.observacion_cortesia?.trim() ?? '';
+
+    if (this.modoCortesia) {
+      if (!observacionCortesia) {
+        this.notification.error('Indica el motivo de la cortesía (ej: La casa invita al cliente)');
         return;
       }
-      if (this.metodoRequiereReferencia(i) && !group.get('referencia')?.value?.trim()) {
-        this.notification.error('Completa la referencia del método de pago');
+    } else {
+      for (let i = 0; i < this.pagos.length; i++) {
+        const group = this.pagos.at(i);
+        if (group.invalid) {
+          group.markAllAsTouched();
+          return;
+        }
+        if (this.metodoRequiereReferencia(i) && !group.get('referencia')?.value?.trim()) {
+          this.notification.error('Completa la referencia del método de pago');
+          return;
+        }
+      }
+
+      if (Math.abs(this.pagosTotal - this.cartSubtotal) > 0.01) {
+        this.notification.error('La suma de pagos debe coincidir con el total de la venta');
         return;
       }
-    }
-
-    if (Math.abs(this.pagosTotal - this.cartSubtotal) > 0.01) {
-      this.notification.error('La suma de pagos debe coincidir con el total de la venta');
-      return;
     }
 
     const idClienteRaw = this.checkoutForm.value.id_cliente;
     const idCliente = idClienteRaw ? Number(idClienteRaw) : undefined;
 
-    const pagos: VentaPagoPayload[] = this.pagos.controls.map((control) => {
-      const value = control.value;
-      const payload: VentaPagoPayload = {
-        metodo_pago: String(value.metodo_pago),
-        monto: Number(value.monto),
-      };
-      if (value.referencia?.trim()) {
-        payload.referencia = value.referencia.trim();
-      }
-      return payload;
-    });
+    const pagos: VentaPagoPayload[] = this.modoCortesia
+      ? []
+      : this.pagos.controls.map((control) => {
+          const value = control.value;
+          const payload: VentaPagoPayload = {
+            metodo_pago: String(value.metodo_pago),
+            monto: Number(value.monto),
+          };
+          if (value.referencia?.trim()) {
+            payload.referencia = value.referencia.trim();
+          }
+          return payload;
+        });
 
     this.submitting = true;
 
@@ -277,16 +307,23 @@ export class PosPageComponent implements OnInit, OnDestroy {
           id_producto: item.producto.id_producto,
           cantidad: item.cantidad,
         })),
-        pagos,
+        pagos: this.modoCortesia ? undefined : pagos,
+        es_cortesia: this.modoCortesia,
+        observacion_cortesia: this.modoCortesia ? observacionCortesia : undefined,
       })
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (venta) => {
           this.submitting = false;
+          const fueCortesia = this.modoCortesia;
+          this.ticketImpresion = buildVentaTicket(venta, this.empresa!);
           this.clearCart();
-          this.notification.success(
-            `Venta #${venta.id_venta} registrada por ${this.formatCurrency(venta.total)}`
-          );
+          const total = Number(venta.total);
+          const mensaje = fueCortesia
+            ? `Cortesía #${venta.id_venta} registrada (${this.formatCurrency(total)} referencial)`
+            : `Venta #${venta.id_venta} registrada por ${this.formatCurrency(total)}`;
+          this.notification.success(`${mensaje}. Imprimiendo ticket…`);
+          printThermalTicket();
         },
         error: (error: Error) => {
           this.submitting = false;
@@ -302,6 +339,16 @@ export class PosPageComponent implements OnInit, OnDestroy {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
+  }
+
+  formatDate(value: string): string {
+    if (!value) return '—';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return value;
+    return date.toLocaleString('es-CO', {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    });
   }
 
   getImagenUrl(imagen?: string): string | null {

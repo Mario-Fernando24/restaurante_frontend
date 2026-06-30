@@ -1,11 +1,11 @@
 <section class="dashboard">
   <header class="dashboard__header">
     <div>
-      <h2>Inicio de turno</h2>
+      <h2>Apertura de caja</h2>
       <p>Hola, {{ userName }} · {{ userEmail }}</p>
     </div>
-    <span *ngIf="!loading && !errorMessage && isAbierto" class="badge-open">Arqueo abierto</span>
-    <span *ngIf="!loading && !errorMessage && !isAbierto" class="badge-closed">Sin turno activo</span>
+    <span *ngIf="!loading && !errorMessage && isAbierto" class="badge-open">Caja abierta</span>
+    <span *ngIf="!loading && !errorMessage && !isAbierto" class="badge-closed">Sin caja activa</span>
   </header>
 
   <div *ngIf="loading" class="dashboard__state">Consultando turno activo...</div>
@@ -23,12 +23,12 @@
       </span>
       <div class="shift-card__body">
         <div>
-          <span class="shift-card__label">Monto de apertura</span>
+          <span class="shift-card__label">Base inicial en efectivo</span>
           <strong class="shift-card__amount">{{ formatCurrency(arqueo.monto_apertura) }}</strong>
           <div class="shift-card__mini">
             <div>
-              <span>Estado</span>
-              <strong>{{ arqueo.estado }}</strong>
+              <span>Responsable</span>
+              <strong>{{ arqueo.cajero || userName }}</strong>
             </div>
             <div>
               <span>Apertura</span>
@@ -38,15 +38,16 @@
         </div>
         <div class="shift-card__actions">
           <a [routerLink]="routes.CAJERO_POS" class="btn-pos">Ir a Punto de Venta</a>
+          <a [routerLink]="routes.CAJERO_MESAS" class="btn-turno">Ver mesas</a>
           <a [routerLink]="routes.CAJERO_TURNO" class="btn-turno">Gestionar turno</a>
         </div>
       </div>
     </section>
 
     <section *ngIf="!isAbierto" class="card card--empty">
-      <h3>No hay turno abierto</h3>
-      <p>Abre tu arqueo de caja para comenzar a vender.</p>
-      <a [routerLink]="routes.CAJERO_TURNO" class="btn-pos btn-pos--inline">Abrir turno</a>
+      <h3>No hay caja abierta</h3>
+      <p>Registra la apertura con la base inicial en efectivo antes de vender.</p>
+      <a [routerLink]="routes.CAJERO_TURNO" class="btn-pos btn-pos--inline">Abrir caja</a>
     </section>
 
     <section class="card">

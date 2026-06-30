@@ -1,26 +1,36 @@
 <section class="admin-page">
   <header class="admin-page__header">
     <div>
-      <h1>Clientes</h1>
-      <p>Gestiona los clientes registrados en el sistema.</p>
+      <h1>Clientes y proveedores</h1>
+      <p>Gestiona clientes y proveedores registrados en el sistema.</p>
     </div>
     <button type="button" class="admin-page__add" (click)="openCreateModal()">
-      + Nuevo cliente
+      + Nuevo registro
     </button>
   </header>
 
   <article class="admin-card">
     <div class="admin-card__toolbar">
-      <div class="admin-card__search">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-        </svg>
-        <input
-          type="search"
-          [formControl]="searchControl"
-          placeholder="Buscar por nombre, documento, correo o estado..."
-          aria-label="Buscar clientes"
-        />
+      <div class="admin-card__filters">
+        <div class="admin-card__search">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input
+            type="search"
+            [formControl]="searchControl"
+            placeholder="Buscar por nombre, documento, correo o estado..."
+            aria-label="Buscar clientes y proveedores"
+          />
+        </div>
+        <div class="admin-card__search">
+          <select [formControl]="tipoUsuarioControl" aria-label="Filtrar por tipo">
+            <option value="">Todos los tipos</option>
+            <option *ngFor="let tipo of tiposUsuario" [value]="tipo">
+              {{ tipoUsuarioLabels[tipo] }}
+            </option>
+          </select>
+        </div>
       </div>
       <span class="admin-card__count" *ngIf="!loading">
         {{ totalItems }} resultado{{ totalItems === 1 ? '' : 's' }}
@@ -43,7 +53,8 @@
         <thead>
           <tr>
             <th>ID</th>
-            <th>Cliente</th>
+            <th>Tipo</th>
+            <th>Nombre</th>
             <th>Documento</th>
             <th>Correo</th>
             <th>Teléfono</th>
@@ -56,9 +67,17 @@
         <tbody>
           <tr *ngFor="let cliente of clientes">
             <td data-label="ID">{{ cliente.id_cliente }}</td>
-            <td data-label="Cliente">
+            <td data-label="Tipo">
+              <span
+                class="status-badge"
+                [class.status-badge--active]="!isProveedor(cliente.tipo_usuario)"
+                [class.status-badge--warning]="isProveedor(cliente.tipo_usuario)"
+              >
+                {{ getTipoUsuarioLabel(cliente.tipo_usuario) }}
+              </span>
+            </td>
+            <td data-label="Nombre">
               <strong>{{ getFullName(cliente) }}</strong>
-              <div>{{ cliente.tipo_usuario }}</div>
             </td>
             <td data-label="Documento">{{ cliente.tipo_documento }} {{ cliente.numero_documento }}</td>
             <td data-label="Correo">{{ cliente.correo }}</td>
@@ -142,10 +161,11 @@
 
       <div class="form-grid">
         <div class="form-field" [class.form-field--error]="tipoUsuarioError">
-          <label class="form-field__label" for="cliente-tipo-usuario">Tipo de usuario</label>
+          <label class="form-field__label" for="cliente-tipo-usuario">Tipo</label>
           <select id="cliente-tipo-usuario" class="form-field__select" formControlName="tipo_usuario">
-            <option value="" disabled>Selecciona un tipo</option>
-            <option *ngFor="let tipo of tiposUsuario" [value]="tipo">{{ tipo }}</option>
+            <option *ngFor="let tipo of tiposUsuario" [value]="tipo">
+              {{ tipoUsuarioLabels[tipo] }}
+            </option>
           </select>
           <span *ngIf="tipoUsuarioError" class="form-field__error">{{ tipoUsuarioError }}</span>
         </div>

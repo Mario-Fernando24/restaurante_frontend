@@ -1,7 +1,7 @@
 export interface AuditoriaRegistro {
   id_auditoria: number;
   fecha: string;
-  nombre_usuario?: string;
+  usuario?: string;
   modulo: string;
   accion: string;
   tabla_afectada: string;

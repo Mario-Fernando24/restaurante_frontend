@@ -1,12 +1,15 @@
 <section class="turno-page">
   <header class="turno-page__header">
     <div>
-      <h1>Gestión de turno</h1>
-      <p>Abre o cierra tu arqueo de caja para operar el punto de venta.</p>
+      <h1>Apertura y cierre de caja</h1>
+      <p>
+        Registra la base inicial al iniciar el turno y realiza el cierre comparando el dinero
+        esperado contra el dinero contado.
+      </p>
     </div>
   </header>
 
-  <div *ngIf="loading" class="turno-page__state">Consultando turno activo...</div>
+  <div *ngIf="loading" class="turno-page__state">Consultando estado de la caja...</div>
 
   <div *ngIf="!loading && errorMessage" class="turno-page__state turno-page__state--error">
     {{ errorMessage }}
@@ -14,68 +17,213 @@
   </div>
 
   <ng-container *ngIf="!loading && !errorMessage">
+    <article *ngIf="ultimoCierre" class="turno-card turno-card--result">
+      <h2>Cierre registrado</h2>
+      <p>El turno #{{ ultimoCierre.id_arqueo }} quedó cerrado correctamente.</p>
+
+      <dl class="turno-summary__grid">
+        <div>
+          <dt>Dinero esperado</dt>
+          <dd>{{ formatCurrency(ultimoCierre.monto_cierre_esperado ?? ultimoCierre.monto_efectivo_esperado ?? 0) }}</dd>
+        </div>
+        <div>
+          <dt>Dinero contado</dt>
+          <dd>{{ formatCurrency(ultimoCierre.monto_cierre_real ?? 0) }}</dd>
+        </div>
+        <div>
+          <dt>{{ getDiferenciaLabel(ultimoCierre.diferencia) }}</dt>
+          <dd
+            [class.turno-summary__diff--pos]="(ultimoCierre.diferencia ?? 0) > 0"
+            [class.turno-summary__diff--neg]="(ultimoCierre.diferencia ?? 0) < 0"
+          >
+            {{ formatCurrency(ultimoCierre.diferencia ?? 0) }}
+          </dd>
+        </div>
+        <div>
+          <dt>Cierre</dt>
+          <dd>{{ formatDate(ultimoCierre.fecha_cierre ?? '') }}</dd>
+        </div>
+      </dl>
+    </article>
+
+    <article *ngIf="!isAbierto" class="turno-alert">
+      <strong>Sin caja activa</strong>
+      <p>
+        Debes registrar la apertura de caja antes de vender. El punto de venta permanece
+        bloqueado hasta completar este paso.
+      </p>
+    </article>
+
     <article *ngIf="!isAbierto" class="turno-card">
-      <h2>Abrir turno</h2>
-      <p>No hay un arqueo activo. Ingresa el monto inicial en efectivo para comenzar.</p>
+      <div class="turno-card__section-title">
+        <span class="turno-card__step">8.1</span>
+        <div>
+          <h2>Apertura de caja</h2>
+          <p>Registra con cuánto dinero en efectivo inicia la operación y responsabiliza el turno.</p>
+        </div>
+      </div>
+
+      <section class="turno-meta" aria-label="Datos de apertura">
+        <div>
+          <span class="turno-meta__label">Fecha</span>
+          <strong>{{ fechaApertura }}</strong>
+        </div>
+        <div>
+          <span class="turno-meta__label">Hora</span>
+          <strong>{{ horaApertura }}</strong>
+        </div>
+        <div class="turno-meta__wide">
+          <span class="turno-meta__label">Usuario responsable</span>
+          <strong>{{ responsable }}</strong>
+        </div>
+      </section>
 
       <form class="turno-form" [formGroup]="abrirForm" (ngSubmit)="submitAbrir()">
         <app-input
-          label="Monto de apertura"
+          label="Base inicial en efectivo"
           type="number"
-          placeholder="0"
+          placeholder="Ej: 200000"
           formControlName="monto_apertura"
           [error]="montoAperturaError"
         ></app-input>
 
+        <div class="form-field">
+          <label class="form-field__label" for="apertura-observacion">Observaciones</label>
+          <textarea
+            id="apertura-observacion"
+            class="form-field__textarea"
+            rows="3"
+            maxlength="255"
+            placeholder="Ej: Billetes verificados, caja limpia, turno mañana..."
+            formControlName="observacion"
+          ></textarea>
+          <span class="form-field__hint">Opcional. Máximo 255 caracteres.</span>
+        </div>
+
         <app-button type="submit" [loading]="submitting" [fullWidth]="true">
-          Abrir turno
+          Registrar apertura de caja
         </app-button>
       </form>
     </article>
 
     <ng-container *ngIf="isAbierto && arqueo">
       <article class="turno-summary">
-        <div class="turno-summary__badge">Turno abierto</div>
-        <h2>Resumen del arqueo</h2>
+        <div class="turno-summary__badge">Caja abierta</div>
+        <h2>Datos de apertura</h2>
 
         <dl class="turno-summary__grid">
           <div>
-            <dt>ID</dt>
+            <dt>Turno</dt>
             <dd>#{{ arqueo.id_arqueo }}</dd>
           </div>
           <div>
-            <dt>Monto apertura</dt>
-            <dd>{{ formatCurrency(arqueo.monto_apertura) }}</dd>
+            <dt>Usuario responsable</dt>
+            <dd>{{ arqueo.cajero || responsable }}</dd>
           </div>
           <div>
-            <dt>Fecha apertura</dt>
-            <dd>{{ formatDate(arqueo.fecha_apertura) }}</dd>
+            <dt>Fecha</dt>
+            <dd>{{ formatDateOnly(arqueo.fecha_apertura) }}</dd>
+          </div>
+          <div>
+            <dt>Hora</dt>
+            <dd>{{ formatTimeOnly(arqueo.fecha_apertura) }}</dd>
+          </div>
+          <div>
+            <dt>Base inicial</dt>
+            <dd>{{ formatCurrency(arqueo.monto_apertura) }}</dd>
           </div>
           <div>
             <dt>Estado</dt>
             <dd class="turno-summary__estado">{{ arqueo.estado }}</dd>
           </div>
+          <div class="turno-summary__full" *ngIf="arqueo.observacion">
+            <dt>Observaciones</dt>
+            <dd>{{ arqueo.observacion }}</dd>
+          </div>
+        </dl>
+
+        <div class="turno-summary__actions">
+          <a [routerLink]="routes.CAJERO_POS" class="turno-link">Ir al punto de venta</a>
+        </div>
+      </article>
+
+      <article *ngIf="arqueo.resumen" class="turno-card">
+        <div class="turno-card__section-title">
+          <div>
+            <h2>Ventas del turno</h2>
+            <p>
+              {{ arqueo.resumen.cantidad_ventas }} venta{{ arqueo.resumen.cantidad_ventas === 1 ? '' : 's' }}
+              registrada{{ arqueo.resumen.cantidad_ventas === 1 ? '' : 's' }} en este turno.
+            </p>
+          </div>
+        </div>
+
+        <dl class="turno-resumen">
+          <div><dt>Efectivo</dt><dd>{{ formatCurrency(arqueo.resumen.ventas_efectivo) }}</dd></div>
+          <div><dt>Tarjeta</dt><dd>{{ formatCurrency(arqueo.resumen.ventas_tarjeta) }}</dd></div>
+          <div><dt>Transferencia</dt><dd>{{ formatCurrency(arqueo.resumen.ventas_transferencia) }}</dd></div>
+          <div><dt>Nequi</dt><dd>{{ formatCurrency(arqueo.resumen.ventas_nequi) }}</dd></div>
+          <div><dt>Daviplata</dt><dd>{{ formatCurrency(arqueo.resumen.ventas_daviplata) }}</dd></div>
+          <div *ngIf="arqueo.resumen.ventas_otros > 0">
+            <dt>Otros medios</dt>
+            <dd>{{ formatCurrency(arqueo.resumen.ventas_otros) }}</dd>
+          </div>
+          <div class="turno-resumen__total">
+            <dt>Total vendido</dt>
+            <dd>{{ formatCurrency(arqueo.resumen.total_ventas) }}</dd>
+          </div>
         </dl>
       </article>
 
       <article class="turno-card">
-        <h2>Cerrar turno</h2>
-        <p>Cuenta el efectivo en caja e ingresa el monto real para cerrar el arqueo.</p>
+        <div class="turno-card__section-title">
+          <span class="turno-card__step">8.3</span>
+          <div>
+            <h2>Cierre de caja</h2>
+            <p>Cuenta el efectivo físico y compáralo contra el dinero esperado en caja.</p>
+          </div>
+        </div>
+
+        <dl class="turno-resumen turno-resumen--cierre" *ngIf="arqueo.resumen">
+          <div><dt>Base inicial</dt><dd>{{ formatCurrency(arqueo.resumen.base_inicial) }}</dd></div>
+          <div><dt>+ Ventas en efectivo</dt><dd>{{ formatCurrency(arqueo.resumen.ventas_efectivo) }}</dd></div>
+          <div class="turno-resumen__highlight">
+            <dt>Dinero esperado en caja</dt>
+            <dd>{{ formatCurrency(arqueo.resumen.dinero_esperado) }}</dd>
+          </div>
+        </dl>
 
         <form class="turno-form" [formGroup]="cerrarForm" (ngSubmit)="submitCerrar()">
           <app-input
-            label="Monto efectivo real"
+            label="Dinero contado físicamente"
             type="number"
-            placeholder="0"
+            placeholder="Ej: 450000"
             formControlName="monto_cierre_real"
             [error]="montoCierreError"
           ></app-input>
 
+          <div class="form-field">
+            <label class="form-field__label" for="cierre-observacion">Observaciones del cierre</label>
+            <textarea
+              id="cierre-observacion"
+              class="form-field__textarea"
+              rows="3"
+              maxlength="255"
+              placeholder="Ej: Faltante por cambio mal dado, billete dañado..."
+              formControlName="observacion"
+            ></textarea>
+            <span class="form-field__hint">Opcional. Explica sobrantes, faltantes o novedades.</span>
+          </div>
+
           <app-button type="submit" variant="secondary" [loading]="submitting" [fullWidth]="true">
-            Cerrar turno
+            Registrar cierre de caja
           </app-button>
         </form>
       </article>
     </ng-container>
   </ng-container>
+
+  <div *ngIf="ticketImpresion" class="thermal-print-host">
+    <app-thermal-receipt [ticket]="ticketImpresion"></app-thermal-receipt>
+  </div>
 </section>

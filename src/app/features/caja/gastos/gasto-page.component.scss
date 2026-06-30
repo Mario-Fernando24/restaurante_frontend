@@ -1,0 +1,28 @@
+@import '../../../shared/styles/admin-crud.scss';
+
+.gasto-form {
+  display: grid;
+  gap: 1rem;
+  max-width: 520px;
+
+  &__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+
+    span {
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #5c534a;
+    }
+
+    select,
+    textarea {
+      border: 1px solid #ddd5cb;
+      border-radius: 10px;
+      padding: 0.65rem 0.75rem;
+      font: inherit;
+      background: #fff;
+    }
+  }
+}

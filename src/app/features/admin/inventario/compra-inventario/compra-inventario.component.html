@@ -1,0 +1,329 @@
+<section class="admin-page compra-page">
+  <header class="admin-page__header no-print">
+    <div>
+      <a class="compra-back" [routerLink]="routes.ADMIN_INVENTARIO_COMPRAS">← Volver a compras</a>
+      <h1>Registrar compra</h1>
+      <p>
+        Registra mercancía del proveedor, adjunta la factura y genera un comprobante imprimible.
+      </p>
+    </div>
+    <div class="compra-page__header-actions">
+      <button
+        type="button"
+        class="compra-page__print-btn"
+        [disabled]="!puedeImprimirBorrador()"
+        (click)="imprimirBorrador()"
+      >
+        Imprimir borrador
+      </button>
+      <button
+        type="button"
+        class="compra-page__print-btn compra-page__print-btn--primary"
+        *ngIf="comprobanteImpresion && !comprobanteImpresion.esBorrador"
+        (click)="imprimirComprobante()"
+      >
+        Imprimir comprobante
+      </button>
+    </div>
+  </header>
+
+  <article class="admin-card compra-ejemplo no-print">
+    <h2>Factura y comprobante</h2>
+    <ul>
+      <li>Toma o sube la foto de la factura del proveedor antes de guardar.</li>
+      <li>Usa <strong>Imprimir borrador</strong> para revisar la compra antes de registrarla.</li>
+      <li>Al guardar, queda el comprobante oficial con número de compra.</li>
+    </ul>
+  </article>
+
+  <div *ngIf="loading" class="admin-card__state no-print">Cargando datos...</div>
+
+  <div *ngIf="!loading && errorMessage" class="admin-card__state admin-card__state--error no-print">
+    {{ errorMessage }}
+    <button type="button" (click)="loadData()">Reintentar</button>
+  </div>
+
+  <article *ngIf="!loading && !errorMessage" class="admin-card no-print">
+    <nav class="compra-tabs" aria-label="Tipo de compra">
+      <button
+        type="button"
+        class="compra-tabs__btn"
+        [class.compra-tabs__btn--active]="activeTab === 'directo'"
+        (click)="setTab('directo')"
+      >
+        Productos venta directa
+      </button>
+      <button
+        type="button"
+        class="compra-tabs__btn"
+        [class.compra-tabs__btn--active]="activeTab === 'preparado'"
+        (click)="setTab('preparado')"
+      >
+        Insumos preparados
+      </button>
+    </nav>
+
+    <form class="compra-form" [formGroup]="compraForm" (ngSubmit)="submit()" novalidate>
+      <div *ngIf="formError" class="modal__error">{{ formError }}</div>
+
+      <div *ngIf="proveedores.length === 0" class="compra-alert">
+        No hay proveedores activos.
+        <a [routerLink]="routes.ADMIN_CLIENTES">Registra un proveedor</a> primero.
+      </div>
+
+      <div class="form-grid">
+        <div class="form-field">
+          <label class="form-field__label" for="compra-proveedor">Proveedor</label>
+          <select
+            id="compra-proveedor"
+            class="form-field__select"
+            formControlName="id_proveedor"
+            [disabled]="proveedores.length === 0"
+          >
+            <option [ngValue]="null" disabled>Selecciona proveedor</option>
+            <option *ngFor="let proveedor of proveedores" [ngValue]="proveedor.id_cliente">
+              {{ proveedor.nombre }} {{ proveedor.apellido }}
+            </option>
+          </select>
+        </div>
+
+        <app-input
+          label="Observaciones (opcional)"
+          placeholder="Ej: Factura #4521, 2 cajas + 1 paquete agua"
+          formControlName="observacion"
+        ></app-input>
+      </div>
+
+      <section class="compra-factura">
+        <header class="compra-factura__header">
+          <div>
+            <h3>Factura del proveedor</h3>
+            <p>Adjunta la foto de la factura o ticket de compra (opcional).</p>
+          </div>
+        </header>
+
+        <div class="compra-factura__body">
+          <label class="compra-factura__upload">
+            <input
+              type="file"
+              accept="image/*"
+              capture="environment"
+              (change)="onFacturaSelected($event)"
+            />
+            <span>Tomar foto / seleccionar imagen</span>
+          </label>
+
+          <div *ngIf="facturaPreviewUrl" class="compra-factura__preview">
+            <img [src]="facturaPreviewUrl" alt="Vista previa de la factura" />
+            <div class="compra-factura__preview-meta">
+              <span>{{ facturaNombre }}</span>
+              <button type="button" (click)="quitarFactura()">Quitar imagen</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section
+        *ngIf="activeTab === 'directo'"
+        class="compra-lineas"
+        formArrayName="lineasProductos"
+      >
+        <header class="compra-lineas__header">
+          <div>
+            <h3>Productos recibidos</h3>
+            <p class="compra-lineas__hint">
+              Elige productos ya creados. El stock se suma automáticamente (1 unidad = 1 producto).
+            </p>
+          </div>
+          <button type="button" class="compra-lineas__add" (click)="addLineaProducto()">
+            + Agregar línea
+          </button>
+        </header>
+
+        <div *ngIf="productosDirectos.length === 0" class="compra-alert">
+          No hay productos de venta directa.
+          <a [routerLink]="routes.ADMIN_PRODUCTOS">Créalos en Productos</a> primero.
+        </div>
+
+        <div
+          *ngFor="let linea of lineasProductos.controls; let i = index"
+          class="compra-linea compra-linea--directo"
+          [formGroupName]="i"
+        >
+          <div class="form-field compra-linea__producto">
+            <label class="form-field__label">Producto</label>
+            <select class="form-field__select" formControlName="id_producto">
+              <option [ngValue]="null" disabled>Selecciona producto</option>
+              <option
+                *ngFor="let producto of productosDirectos"
+                [ngValue]="producto.id_producto"
+              >
+                {{ producto.nombre }}
+              </option>
+            </select>
+          </div>
+
+          <app-input
+            label="Cantidad (unidades)"
+            type="number"
+            placeholder="Ej: 48"
+            formControlName="cantidad"
+          ></app-input>
+
+          <app-input
+            label="Costo compra / unidad"
+            type="number"
+            placeholder="Ej: 2500"
+            formControlName="costo_unitario"
+          ></app-input>
+
+          <div class="compra-linea__readonly" *ngIf="getProducto(linea.get('id_producto')?.value) as producto">
+            <span class="compra-linea__readonly-label">Precio venta</span>
+            <strong>{{ formatCurrency(producto.precio_venta) }}</strong>
+            <span
+              class="compra-linea__utilidad"
+              *ngIf="utilidadUnitariaLinea(i) as utilidad"
+              [class.compra-linea__utilidad--negativa]="utilidad < 0"
+            >
+              Utilidad/u: {{ formatCurrency(utilidad) }}
+              <ng-container *ngIf="margenLinea(i) as margen">
+                ({{ margen | number: '1.0-1' }}%)
+              </ng-container>
+            </span>
+          </div>
+
+          <button
+            type="button"
+            class="compra-linea__remove"
+            [disabled]="lineasProductos.length === 1"
+            (click)="removeLineaProducto(i)"
+          >
+            Quitar
+          </button>
+        </div>
+
+        <footer class="compra-preview" *ngIf="lineasProductos.length > 0">
+          <div>
+            <span>Costo estimado:</span>
+            <strong>{{ formatCurrency(costoTotalPreview()) }}</strong>
+          </div>
+          <div>
+            <span>Utilidad potencial:</span>
+            <strong>{{ formatCurrency(utilidadTotalPreview()) }}</strong>
+          </div>
+        </footer>
+      </section>
+
+      <section
+        *ngIf="activeTab === 'preparado'"
+        class="compra-lineas"
+        formArrayName="lineasInsumos"
+      >
+        <header class="compra-lineas__header">
+          <div>
+            <h3>Insumos para productos preparados</h3>
+            <p class="compra-lineas__hint">
+              Harina, carne, queso, etc. Se usan en recetas; no incluye gaseosas ni venta directa.
+            </p>
+          </div>
+          <button type="button" class="compra-lineas__add" (click)="addLineaInsumo()">
+            + Agregar línea
+          </button>
+        </header>
+
+        <div *ngIf="insumosPreparado.length === 0" class="compra-alert">
+          No hay insumos para preparados.
+          <a [routerLink]="routes.ADMIN_INSUMOS">Créalos en Insumos</a> primero.
+        </div>
+
+        <div
+          *ngFor="let linea of lineasInsumos.controls; let i = index"
+          class="compra-linea compra-linea--preparado"
+          [formGroupName]="i"
+        >
+          <div class="form-field compra-linea__insumo">
+            <label class="form-field__label">Insumo</label>
+            <select class="form-field__select" formControlName="id_insumo">
+              <option [ngValue]="null" disabled>Selecciona insumo</option>
+              <option *ngFor="let insumo of insumosPreparado" [ngValue]="insumo.id_insumo">
+                {{ insumo.nombre }} ({{ insumo.unidad_medida }})
+              </option>
+            </select>
+          </div>
+
+          <app-input
+            [label]="'Cantidad en ' + unidadLabel(getInsumo(linea.get('id_insumo')?.value)?.unidad_medida) + 's'"
+            type="number"
+            placeholder="Ej: 5000"
+            formControlName="cantidad"
+          ></app-input>
+
+          <app-input
+            label="Costo compra / unidad (opcional)"
+            type="number"
+            placeholder="Actualiza costo del insumo"
+            formControlName="costo_unitario"
+          ></app-input>
+
+          <button
+            type="button"
+            class="compra-linea__remove"
+            [disabled]="lineasInsumos.length === 1"
+            (click)="removeLineaInsumo(i)"
+          >
+            Quitar
+          </button>
+        </div>
+      </section>
+
+      <div class="compra-form__actions">
+        <app-button type="submit" [loading]="saving" [disabled]="proveedores.length === 0">
+          Registrar compra
+        </app-button>
+        <button
+          type="button"
+          class="compra-link-btn"
+          [disabled]="!puedeImprimirBorrador()"
+          (click)="imprimirBorrador()"
+        >
+          Vista previa / imprimir
+        </button>
+        <a [routerLink]="routes.ADMIN_INVENTARIO_STOCK" class="compra-link">Ver stock</a>
+        <a [routerLink]="routes.ADMIN_MOVIMIENTOS" class="compra-link">Ver movimientos</a>
+      </div>
+    </form>
+  </article>
+
+  <article
+    *ngIf="comprobanteImpresion && !comprobanteImpresion.esBorrador"
+    class="admin-card compra-resumen no-print"
+  >
+    <header class="compra-resumen__header">
+      <h2>Compra #{{ comprobanteImpresion.folio }} registrada</h2>
+      <button type="button" class="compra-page__print-btn" (click)="imprimirComprobante()">
+        Imprimir comprobante
+      </button>
+    </header>
+    <p class="compra-resumen__fecha">{{ formatDate(comprobanteImpresion.fecha) }}</p>
+    <div class="compra-resumen__grid">
+      <div>
+        <span>Costo total</span>
+        <strong>{{ formatCurrency(comprobanteImpresion.totalCosto) }}</strong>
+      </div>
+      <div *ngIf="comprobanteImpresion.totalVentaPotencial > 0">
+        <span>Venta potencial</span>
+        <strong>{{ formatCurrency(comprobanteImpresion.totalVentaPotencial) }}</strong>
+      </div>
+      <div *ngIf="comprobanteImpresion.utilidadPotencial !== 0">
+        <span>Utilidad potencial</span>
+        <strong class="compra-resumen__utilidad">
+          {{ formatCurrency(comprobanteImpresion.utilidadPotencial) }}
+        </strong>
+      </div>
+    </div>
+  </article>
+
+  <div *ngIf="ticketImpresion" class="thermal-print-host">
+    <app-thermal-receipt [ticket]="ticketImpresion"></app-thermal-receipt>
+  </div>
+</section>

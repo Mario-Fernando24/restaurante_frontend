@@ -1,0 +1,86 @@
+<section class="admin-page mesas-page">
+  <header class="admin-page__header">
+    <div>
+      <h1>Mesas del restaurante</h1>
+      <p>
+        Configura las mesas del salón. El cajero podrá tomar pedidos por mesa sin cerrar la venta
+        hasta que los clientes pidan la cuenta.
+      </p>
+    </div>
+    <app-button (clicked)="openCreate()">+ Nueva mesa</app-button>
+  </header>
+
+  <article class="admin-card">
+    <div class="mesas-page__toolbar">
+      <input
+        type="search"
+        [formControl]="searchControl"
+        placeholder="Buscar mesa o zona..."
+        aria-label="Buscar mesas"
+      />
+      <span *ngIf="!loading">{{ filtered.length }} mesa{{ filtered.length === 1 ? '' : 's' }}</span>
+    </div>
+
+    <div *ngIf="loading" class="admin-card__state">Cargando mesas...</div>
+    <div *ngIf="!loading && errorMessage" class="admin-card__state admin-card__state--error">
+      {{ errorMessage }}
+      <app-button size="sm" variant="secondary" (clicked)="loadMesas()">Reintentar</app-button>
+    </div>
+    <div *ngIf="!loading && !errorMessage && filtered.length === 0" class="admin-card__state">
+      No hay mesas registradas. Crea la primera para empezar.
+    </div>
+
+    <div *ngIf="!loading && filtered.length > 0" class="mesas-grid">
+      <article
+        *ngFor="let mesa of filtered"
+        class="mesa-card"
+        [class.mesa-card--inactive]="!isActivo(mesa.estado)"
+      >
+        <div class="mesa-card__icon">🪑</div>
+        <h2>{{ mesa.numero }}</h2>
+        <p>{{ mesa.zona || 'Sin zona' }} · {{ mesa.capacidad }} personas</p>
+        <span
+          class="mesa-card__badge"
+          [class.mesa-card__badge--active]="isActivo(mesa.estado)"
+        >
+          {{ mesa.estado }}
+        </span>
+        <div class="mesa-card__actions">
+          <button type="button" (click)="openEdit(mesa)">Editar</button>
+          <button
+            type="button"
+            [disabled]="isUpdating(mesa.id_mesa)"
+            (click)="toggleEstado(mesa)"
+          >
+            {{ isActivo(mesa.estado) ? 'Desactivar' : 'Activar' }}
+          </button>
+        </div>
+      </article>
+    </div>
+  </article>
+
+  <div *ngIf="showModal" class="mesa-modal-overlay" (click)="closeModal()">
+    <div class="mesa-modal" (click)="$event.stopPropagation()">
+      <header>
+        <h2>{{ modalTitle }}</h2>
+        <button type="button" (click)="closeModal()">×</button>
+      </header>
+
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <app-input label="Nombre / número" formControlName="numero" placeholder="Ej: Mesa 1"></app-input>
+        <app-input label="Zona" formControlName="zona" placeholder="Ej: Salón, Terraza"></app-input>
+        <label>
+          <span>Capacidad</span>
+          <input type="number" formControlName="capacidad" min="1" max="20" />
+        </label>
+
+        <p *ngIf="saveError" class="mesa-modal__error">{{ saveError }}</p>
+
+        <div class="mesa-modal__actions">
+          <app-button type="button" variant="ghost" (clicked)="closeModal()">Cancelar</app-button>
+          <app-button type="submit" [loading]="saving">Guardar</app-button>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>

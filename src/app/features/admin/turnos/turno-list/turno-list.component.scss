@@ -1,1 +1,139 @@
 @import '../../../../shared/styles/admin-crud.scss';
+
+.turno-select-wrap select {
+  min-width: 260px;
+}
+
+.turno-row--selected {
+  background: #faf6f1;
+}
+
+.turno-detalle {
+  margin-top: 1rem;
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+
+    h2 {
+      margin: 0 0 0.35rem;
+      font-size: 1.25rem;
+    }
+
+    p {
+      margin: 0;
+      color: #7a6f63;
+      font-size: 0.9rem;
+    }
+  }
+}
+
+.turno-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.turno-kpi {
+  padding: 0.9rem 1rem;
+  border: 1px solid #ebe4dc;
+  border-radius: 12px;
+  background: #faf8f6;
+
+  span {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #9a8d7d;
+    margin-bottom: 0.35rem;
+  }
+
+  strong {
+    font-size: 1.1rem;
+    color: #2c2419;
+  }
+
+  &__pos {
+    color: #047857;
+  }
+
+  &__neg {
+    color: #b42318;
+  }
+}
+
+.turno-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.turno-section {
+  margin-bottom: 1.25rem;
+
+  h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #3d3429;
+  }
+
+  &__empty {
+    color: #9a8d7d;
+    font-size: 0.9rem;
+    padding: 0.5rem 0;
+  }
+}
+
+.turno-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+
+  th,
+  td {
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid #f0ebe4;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #9a8d7d;
+    background: #faf8f6;
+  }
+
+  &__sub {
+    font-size: 0.8rem;
+    color: #9a8d7d;
+    margin-top: 0.15rem;
+  }
+
+  &--ventas td {
+    font-size: 0.85rem;
+  }
+}
+
+.turno-pago-line {
+  line-height: 1.45;
+
+  span {
+    color: #7a6f63;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .turno-grid {
+    grid-template-columns: 1fr;
+  }
+}

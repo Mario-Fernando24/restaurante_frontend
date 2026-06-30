@@ -1,0 +1,105 @@
+<article class="thermal-receipt" *ngIf="ticket">
+  <header class="thermal-receipt__head">
+    <p class="thermal-receipt__number">No. {{ ticket.numero }}</p>
+    <h1 class="thermal-receipt__brand">{{ ticket.empresa.nombre_comercial }}</h1>
+    <p class="thermal-receipt__legal">{{ ticket.empresa.razon_social }}</p>
+    <p class="thermal-receipt__nit">NIT {{ ticket.empresa.nit }}</p>
+    <p class="thermal-receipt__address">
+      {{ ticket.empresa.direccion }}
+      <span *ngIf="ticket.empresa.ciudad"> · {{ ticket.empresa.ciudad }}</span>
+    </p>
+    <p *ngIf="ticket.empresa.telefono" class="thermal-receipt__contact">
+      Tel. {{ ticket.empresa.telefono }}
+    </p>
+  </header>
+
+  <div class="thermal-receipt__divider"></div>
+
+  <section class="thermal-receipt__title-block">
+    <h2>{{ ticket.titulo }}</h2>
+    <p *ngIf="ticket.subtitulo" class="thermal-receipt__subtitle">{{ ticket.subtitulo }}</p>
+  </section>
+
+  <section class="thermal-receipt__meta">
+    <div>
+      <span>Fecha</span>
+      <strong>{{ ticket.fecha }}</strong>
+    </div>
+    <div *ngIf="ticket.cajero">
+      <span>{{ cajeroLabel }}</span>
+      <strong>{{ ticket.cajero }}</strong>
+    </div>
+    <div *ngIf="ticket.proveedor">
+      <span>Proveedor</span>
+      <strong>{{ ticket.proveedor }}</strong>
+    </div>
+    <div *ngIf="ticket.cliente">
+      <span>Cliente</span>
+      <strong>{{ ticket.cliente }}</strong>
+    </div>
+    <div *ngIf="ticket.beneficiario">
+      <span>Beneficiario</span>
+      <strong>{{ ticket.beneficiario }}</strong>
+    </div>
+    <div *ngIf="ticket.metodoPago">
+      <span>Método</span>
+      <strong>{{ ticket.metodoPago }}</strong>
+    </div>
+    <div *ngFor="let meta of ticket.metas">
+      <span>{{ meta.label }}</span>
+      <strong>{{ meta.value }}</strong>
+    </div>
+  </section>
+
+  <div *ngIf="ticket.observacion" class="thermal-receipt__note">
+    <span>Observación</span>
+    <p>{{ ticket.observacion }}</p>
+  </div>
+
+  <div class="thermal-receipt__divider"></div>
+
+  <table class="thermal-receipt__table" *ngIf="ticket.lineas.length">
+    <thead>
+      <tr>
+        <th>{{ itemColumnLabel }}</th>
+        <th>Cant</th>
+        <th>{{ priceColumnLabel }}</th>
+        <th>Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let linea of ticket.lineas">
+        <td>{{ linea.producto }}</td>
+        <td>{{ linea.cantidad }}</td>
+        <td>{{ formatCurrency(linea.precio) }}</td>
+        <td>{{ formatCurrency(linea.total) }}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="thermal-receipt__divider"></div>
+
+  <footer class="thermal-receipt__totals">
+    <div *ngIf="ticket.totalQty != null" class="thermal-receipt__total-row">
+      <span>Total ítems</span>
+      <strong>{{ ticket.totalQty }}</strong>
+    </div>
+    <div *ngIf="ticket.totalReferencia != null && ticket.tipo === 'CORTESIA'" class="thermal-receipt__total-row">
+      <span>Valor referencial</span>
+      <strong>{{ formatCurrency(ticket.totalReferencia) }}</strong>
+    </div>
+    <div class="thermal-receipt__amount">
+      <span>{{ amountLabel }}</span>
+      <strong>{{ formatCurrency(ticket.totalCobrado) }}</strong>
+    </div>
+    <div *ngIf="ticket.tipo === 'CIERRE' && ticket.totalReferencia != null" class="thermal-receipt__total-row">
+      <span>Efectivo esperado</span>
+      <strong>{{ formatCurrency(ticket.totalReferencia) }}</strong>
+    </div>
+  </footer>
+
+  <footer class="thermal-receipt__footer">
+    <p *ngIf="ticket.pieExtra">{{ ticket.pieExtra }}</p>
+    <p>{{ ticket.empresa.pie_ticket }}</p>
+  </footer>
+</article>
